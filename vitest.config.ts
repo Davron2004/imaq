@@ -3,7 +3,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["web/src/**/*.test.ts", "shared/**/*.test.ts", "worker/**/*.test.ts"],
+    include: ["web/src/**/*.test.{ts,tsx}", "shared/**/*.test.ts", "worker/**/*.test.ts", "scripts/**/*.test.ts"],
+    environment: "node",
     exclude: ["**/node_modules/**", "e2e/**", ".claude/**"],
   },
 });
