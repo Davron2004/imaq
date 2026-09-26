@@ -1,54 +1,56 @@
+/* Live demo stage, following the design reference (stage()): page heading, then three
+   labelled panels (resident, driver, office), each with an "Open full view" link.
+   Phones keep a real phone width (earlier decision) instead of the reference's 1fr 1fr 2fr. */
 .page {
-  display: flex;
-  height: 100vh;
-  gap: var(--s-3);
-  padding: var(--s-3);
+  max-width: 120rem;
+  margin: 0 auto;
+  padding: var(--s-6) var(--s-6) var(--s-5);
+}
+.heading { margin-bottom: var(--s-5); }
+.heading h1 { margin: var(--s-2) 0 var(--s-2); }
+.heading p { margin: 0; }
+.grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24.5rem) minmax(18rem, 24.5rem) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+.panel { display: grid; gap: var(--s-3); align-content: start; min-width: 0; }
+.panelHead { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.panelHead h2 { font-size: 1.125rem; margin: 0; }
+.openFull {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: var(--tap-min);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+.openFull:hover { text-decoration: underline; }
+.openFull svg { width: 1.125rem; height: 1.125rem; }
+.panel iframe,
+.placeholder {
+  width: 100%;
+  height: max(40rem, calc(100dvh - 17rem));
+  border: 1px solid var(--c-soft-line);
+  border-radius: var(--radius-lg);
   background: var(--c-surface);
 }
-.phones {
-  display: flex;
-  flex-direction: row;
-  gap: var(--s-3);
-  flex-shrink: 0;
-}
-.phoneFrame {
-  border: 6px solid var(--c-text);
-  border-radius: 1.5rem;
-  overflow: hidden;
-  background: var(--c-bg);
-  /* A real phone's width, full height, so both apps look the way they do on a phone. */
-  width: 24.5rem;
-  display: flex;
-  flex-direction: column;
-}
-.phoneLabel {
-  padding: var(--s-2);
-  font-weight: var(--fw-bold);
-  text-align: center;
-  border-bottom: 1px solid var(--c-surface-2);
-}
-.phoneFrame iframe {
-  flex: 1;
-  width: 100%;
-  border: none;
-}
-.officeFrame {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: 2px solid var(--c-text);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.officeFrame iframe {
-  flex: 1;
-  width: 100%;
-  border: none;
-}
+.placeholder { display: grid; place-items: center; color: var(--c-text-muted); }
 .switchRow {
-  padding: var(--s-2);
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  border-top: 1px solid var(--c-surface-2);
+  min-height: var(--tap-min);
+  font-weight: var(--fw-semibold);
+}
+.switchRow input { min-height: 0; width: 1.25rem; height: 1.25rem; }
+
+@media (max-width: 64rem) {
+  .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .wide { grid-column: 1 / -1; }
+}
+@media (max-width: 48rem) {
+  .page { padding: var(--s-5) var(--s-4); }
+  .grid { grid-template-columns: minmax(0, 1fr); }
 }

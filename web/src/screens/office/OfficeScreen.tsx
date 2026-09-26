@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { useOffice, useDeliveryLookup, useWeekly } from "../../data/office";
 import OfficeView from "./OfficeView";
 
@@ -7,6 +7,8 @@ export default function OfficeScreen() {
   const state = useOffice(villageId);
   const lookup = useDeliveryLookup(villageId);
   const weekly = useWeekly(villageId);
+  // The live demo stage embeds the office in an iframe; there the site header would only take space.
+  const [params] = useSearchParams();
 
   return (
     <OfficeView
@@ -23,6 +25,7 @@ export default function OfficeScreen() {
       onRetry={state.retry}
       lookup={lookup}
       weekly={weekly}
+      embedded={params.get("embed") === "1"}
     />
   );
 }

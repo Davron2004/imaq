@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { CheckCircle2, XCircle, AlertTriangle, Play } from "lucide-react";
-import { Button, Card, Stat, StatusBadge, Chip } from "../../ui";
-import { VillageMap } from "../shared/VillageMap";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CheckCircle2, XCircle, AlertTriangle, Play, Plus, RotateCcw, Truck, Flag as FlagIcon, Mic, Clock, Droplet, Droplets, Trash2 } from "lucide-react";
+import { Button, StatusBadge, type Tone } from "../../ui";
+import { SiteHeader } from "../shared/SiteHeader";
+import { VillageMap, VillageMapLegend } from "../shared/VillageMap";
 import { t, formatTime, formatDate, formatAge } from "../../i18n";
 import s from "./Office.module.css";
 import {
@@ -32,207 +33,345 @@ export interface OfficeViewProps {
   onRetry: () => void;
   lookup: ReturnType<typeof useDeliveryLookup>;
   weekly: ReturnType<typeof useWeekly>;
+  /** Shown inside the live demo stage: no site header. */
+  embedded?: boolean;
+}
+
+/** Badge look per request kind: status is never colour alone, so each kind has its own icon and word. */
+const KIND_BADGE: Record<RequestKind, { tone: Tone; icon: ReactNode }> = {
+  emergency: { tone: "emergency", icon: <AlertTriangle /> },
+  out: { tone: "danger", icon: <Droplet /> },
+  soon: { tone: "info", icon: <Droplets /> },
+  sewage: { tone: "warn", icon: <Trash2 /> },
+};
+
+function KindBadge({ kind }: { kind: RequestKind }) {
+  const b = KIND_BADGE[kind];
+  return (
+    <StatusBadge tone={b.tone} icon={b.icon}>
+      {t(`common.request.${kind}`)}
+    </StatusBadge>
+  );
 }
 
 export default function OfficeView(props: OfficeViewProps) {
-  const { status, snapshot, newFlagIds, announcement, villageId, onAddRequest, onCancelRequest, onConfirmLog, onReset, resetting, onRetry, lookup, weekly } = props;
+  const { status, snapshot, newFlagIds, announcement, villageId, onAddRequest, onCancelRequest, onConfirmLog, onReset, resetting, onRetry, lookup, weekly, embedded } = props;
+  // "Add an office call" panel: closed -> open (button) -> closed (added or cancelled).
+  const [adding, setAdding] = useState(false);
 
   if (status === "error" && !snapshot) {
     return (
-      <main className={s.page}>
-        <p>{t("office.error")}</p>
-        <Button onClick={onRetry}>{t("office.retry")}</Button>
-      </main>
+      <>
+        {!embedded && <SiteHeader />}
+        <main className={s.page}>
+          <p>{t("office.error")}</p>
+          <Button onClick={onRetry}>{t("office.retry")}</Button>
+        </main>
+      </>
     );
   }
   if (status === "loading" || !snapshot) {
     return (
-      <main className={s.page} aria-busy="true">
-        <p>{t("office.loading")}</p>
-      </main>
+      <>
+        {!embedded && <SiteHeader />}
+        <main className={s.page} aria-busy="true">
+          <p>{t("office.loading")}</p>
+        </main>
+      </>
     );
   }
 
-  const tooLongCount = snapshot.counts.waitingTooLong.length;
+  const tooLong = new Set(snapshot.counts.waitingTooLong);
+  const tooLongRequests = snapshot.openRequests.filter((r) => tooLong.has(r.id));
+  const waterTrucks = snapshot.trucks.filter((tr) => tr.kind === "water");
+  const waterUp = waterTrucks.filter((tr) => tr.status === "up").length;
+  const openCount = snapshot.openRequests.length;
+  const latestWeek = weekly.rows[0];
 
   return (
-    <main className={s.page}>
-      <div aria-live="assertive" className="visually-hidden">
-        {announcement}
-      </div>
-      <header className={s.header}>
-        <div>
-          <h1>{t("office.title")} · {snapshot.village.name}</h1>
-          <p>{formatDate(snapshot.serverTime)} · {t("office.updated", { time: formatTime(snapshot.serverTime) })}</p>
+    <>
+      {!embedded && <SiteHeader />}
+      <main className={s.page}>
+        <div aria-live="assertive" className="visually-hidden">
+          {announcement}
         </div>
-        <div className={s.headerLinks}>
-          <a href={`/api/v/${villageId}/deliveries?from=0&to=${snapshot.serverTime}&format=csv`}>{t("office.exportDeliveries")}</a>
-          <a href={weekly.csvUrl}>{t("office.exportWeekly")}</a>
-          <Button variant="secondary" onClick={onReset} disabled={resetting}>
-            {resetting ? t("office.resetting") : t("office.reset")}
-          </Button>
-        </div>
-      </header>
 
-      <div className={s.grid}>
-        <Card className={s.trucks}>
-          <h2>{t("office.trucksHeading")}</h2>
-          {snapshot.trucks.map((truck) => (
-            <div key={truck.id} className={s.truckRow}>
-              <div>
-                <strong>{truck.label}</strong> · {t(`common.truck.${truck.kind}`)}
-                <div>
-                  <StatusBadge tone={truck.status === "up" ? "ok" : "danger"} icon={truck.status === "up" ? <CheckCircle2 /> : <XCircle />}>
-                    {t(`common.truck.${truck.status}`)}
-                  </StatusBadge>
+        <div className={s.heading}>
+          <div>
+            <span className="eyebrow">
+              {t("office.eyebrow")} / {snapshot.village.name}
+            </span>
+            <h1>{t("office.headline")}</h1>
+            <p className="muted">
+              {formatDate(snapshot.serverTime)} · {t("office.updated", { time: formatTime(snapshot.serverTime) })}
+            </p>
+          </div>
+          <div className={s.actions}>
+            <Button icon={<Plus />} onClick={() => setAdding(true)} aria-expanded={adding} aria-controls="office-add-call">
+              {t("office.addCall")}
+            </Button>
+            <Button variant="ghost" icon={<RotateCcw />} onClick={onReset} disabled={resetting}>
+              {resetting ? t("office.resetting") : t("office.resetVillage")}
+            </Button>
+          </div>
+        </div>
+
+        {adding && (
+          <section id="office-add-call" className={`${s.panel} ${s.addPanel}`} aria-labelledby="office-add-call-h">
+            <h2 id="office-add-call-h">{t("office.addCall")}</h2>
+            <AddRequestForm houses={snapshot.houses} onAdd={onAddRequest} onDone={() => setAdding(false)} />
+          </section>
+        )}
+
+        <div className={s.stats}>
+          <div className={s.stat}>
+            <strong>
+              {waterUp}
+              <span className="muted"> / {waterTrucks.length}</span>
+            </strong>
+            <span>{t("office.stat.waterRunning")}</span>
+          </div>
+          <div className={s.stat}>
+            <strong>{openCount}</strong>
+            <span>{t("office.stat.open")}</span>
+          </div>
+          <div className={s.stat}>
+            <strong>{snapshot.counts.oldestOpenAt != null ? formatAge(snapshot.serverTime - snapshot.counts.oldestOpenAt) : "0"}</strong>
+            <span>{t("office.stat.oldest")}</span>
+          </div>
+          <div className={`${s.stat} ${tooLongRequests.length > 0 ? s.statAlert : ""}`}>
+            <strong>
+              {tooLongRequests.length > 0 && <AlertTriangle aria-hidden="true" className={s.statIcon} />}
+              {tooLongRequests.length}
+            </strong>
+            <span>{t("office.stat.overdue")}</span>
+          </div>
+        </div>
+
+        <div className={s.layout}>
+          <div className={s.column}>
+            <section className={s.panel} aria-labelledby="office-open-h">
+              <div className={s.sectionHead}>
+                <h2 id="office-open-h">{t("office.openHeading")}</h2>
+                <small>{t("office.open.priority")}</small>
+              </div>
+              {tooLongRequests.length > 0 && (
+                <div className={s.noticeError} role="status">
+                  <strong>
+                    <AlertTriangle aria-hidden="true" className={s.inlineIcon} />
+                    {t("office.open.attention", { count: tooLongRequests.length })}
+                  </strong>
+                  <p>{tooLongRequests.map((r) => r.houseLabel).join(" · ")}</p>
                 </div>
-                {truck.status === "down" && truck.downSince != null && (
-                  <p>
-                    {t("office.truck.downSince", { when: `${formatDate(truck.downSince)} ${formatTime(truck.downSince)}` })}
-                    {truck.downReason && <> · {t("office.truck.reason", { reason: truck.downReason })}</>}
-                  </p>
-                )}
-                <p>
-                  {truck.lastCheck ? t("office.truck.lastCheck", { time: formatTime(truck.lastCheck.at) }) : t("office.truck.noCheck")}
-                </p>
-                <p>
-                  {truck.downHistoryDays.length > 0
-                    ? t("office.truck.history", { list: truck.downHistoryDays.join(", ") })
-                    : t("office.truck.historyNone")}
-                </p>
+              )}
+              {openCount === 0 ? (
+                <p className={s.empty}>{t("office.open.empty")}</p>
+              ) : (
+                <ul className={s.list}>
+                  {snapshot.openRequests.map((r) => {
+                    const last = r.attempts[r.attempts.length - 1];
+                    return (
+                      <li key={r.id} className={s.request}>
+                        <div className={s.field}>
+                          <strong className={s.house}>{r.houseLabel}</strong>
+                          <small>{t(`common.source.${r.source}`)}</small>
+                        </div>
+                        <div className={s.field}>
+                          <KindBadge kind={r.kind} />
+                          {last && <small>{t("office.open.attempts", { time: formatTime(last.at), reason: t(`common.reason.${last.reason}`) })}</small>}
+                        </div>
+                        <div className={s.field}>
+                          <span>{t("office.open.age", { age: formatAge(snapshot.serverTime - r.createdAt) })}</span>
+                        </div>
+                        <Button variant="ghost" className={s.cancel} onClick={() => onCancelRequest(r.id)}>
+                          {t("office.open.cancel")}
+                          <span className="visually-hidden"> · {r.houseLabel}</span>
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+
+            <section className={s.panel} aria-labelledby="office-map-h">
+              <div className={s.sectionHead}>
+                <h2 id="office-map-h">{t("office.mapHeading")}</h2>
+                <small>{t("office.map.caption", { count: snapshot.houses.length })}</small>
+              </div>
+              <VillageMap
+                houses={snapshot.houses}
+                openRequests={snapshot.openRequests}
+                waitingTooLong={snapshot.counts.waitingTooLong}
+                geometry={snapshot.village.geometry}
+              />
+              <VillageMapLegend />
+            </section>
+          </div>
+
+          <aside className={s.column} aria-label={t("office.sideLabel")}>
+            <section className={s.panel} aria-labelledby="office-fleet-h">
+              <div className={s.sectionHead}>
+                <h2 id="office-fleet-h">{t("office.fleetHeading")}</h2>
+                <Truck aria-hidden="true" className={s.headIcon} />
+              </div>
+              <div className={s.fleet}>
+                {snapshot.trucks.map((truck) => (
+                  <article key={truck.id} className={s.truck}>
+                    <h3>{truck.label}</h3>
+                    <small>{t(`common.truck.${truck.kind}`)}</small>
+                    <StatusBadge tone={truck.status === "up" ? "ok" : "danger"} icon={truck.status === "up" ? <CheckCircle2 /> : <XCircle />}>
+                      {t(`common.truck.${truck.status}`)}
+                    </StatusBadge>
+                    <small>{truck.lastCheck ? t("office.truck.lastCheck", { time: formatTime(truck.lastCheck.at) }) : t("office.truck.noCheck")}</small>
+                    {truck.status === "down" && truck.downSince != null && (
+                      <p className={s.truckDown}>
+                        {t("office.truck.downSince", { when: `${formatDate(truck.downSince)} ${formatTime(truck.downSince)}` })}
+                      </p>
+                    )}
+                    {truck.status === "down" && truck.downReason && <strong>{truck.downReason}</strong>}
+                    {truck.downHistoryDays.length > 0 ? (
+                      <div className={s.history}>
+                        <small>{t("office.truck.historyLabel", { count: truck.downHistoryDays.length })}</small>
+                        <ul className={s.chips}>
+                          {truck.downHistoryDays.map((d, i) => (
+                            <li key={i}>{t("office.truck.days", { count: d })}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <small>{t("office.truck.historyNone")}</small>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className={s.panel} aria-labelledby="office-flags-h">
+              <div className={s.sectionHead}>
+                <h2 id="office-flags-h">{t("office.attentionHeading")}</h2>
+                <FlagIcon aria-hidden="true" className={s.headIcon} />
+              </div>
+              {snapshot.flags.length === 0 ? (
+                <p className={s.empty}>{t("office.flags.empty")}</p>
+              ) : (
+                <div className={s.stack}>
+                  {snapshot.flags.map((flag) => (
+                    <FlagCard key={flag.id} flag={flag} isNew={newFlagIds.has(flag.id)} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className={s.panel} aria-labelledby="office-human-h">
+              <div className={s.sectionHead}>
+                <h2 id="office-human-h">{t("office.humanHeading")}</h2>
+                <StatusBadge tone="info" icon={<Mic />}>
+                  {snapshot.needsHuman.length}
+                </StatusBadge>
+              </div>
+              {snapshot.needsHuman.length === 0 ? (
+                <p className={s.empty}>{t("office.human.empty")}</p>
+              ) : (
+                <div className={s.stack}>
+                  {snapshot.needsHuman.map((note) => (
+                    <NeedsHumanCard key={note.id} note={note} villageId={villageId} houses={snapshot.houses} trucks={snapshot.trucks} onConfirm={onConfirmLog} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className={s.panel} aria-labelledby="office-feed-h">
+              <div className={s.sectionHead}>
+                <h2 id="office-feed-h">{t("office.activityHeading")}</h2>
+                <Clock aria-hidden="true" className={s.headIcon} />
+              </div>
+              {snapshot.feed.length === 0 ? (
+                <p className={s.empty}>{t("office.feed.empty")}</p>
+              ) : (
+                <ul className={s.list}>
+                  {snapshot.feed.slice(0, 8).map((item) => (
+                    <li key={item.id} className={s.activity}>
+                      <time dateTime={new Date(item.at).toISOString()}>{formatTime(item.at)}</time>
+                      <p>
+                        <FeedRow item={item} />
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </aside>
+        </div>
+
+        <section className={`${s.panel} ${s.lookup}`} aria-labelledby="office-lookup-h">
+          <div className={s.sectionHead}>
+            <div className={s.field}>
+              <h2 id="office-lookup-h">{t("office.lookup.heading")}</h2>
+              <span className="muted">{t("office.lookup.question")}</span>
+            </div>
+            <Droplet aria-hidden="true" className={s.headIcon} />
+          </div>
+          <LookupPanel lookup={lookup} />
+          <a className={s.textLink} href={`/api/v/${villageId}/deliveries?from=0&to=${snapshot.serverTime}&format=csv`}>
+            {t("office.exportDeliveries")}
+          </a>
+        </section>
+
+        <section className={`${s.panel} ${s.weekly}`} aria-labelledby="office-weekly-h">
+          <div className={s.sectionHead}>
+            <h2 id="office-weekly-h">{t("office.weeklyHeading")}</h2>
+            <a className={s.buttonLink} href={weekly.csvUrl}>
+              {t("office.exportWeekly")}
+            </a>
+          </div>
+          {latestWeek && (
+            <div className={s.weeklyGrid}>
+              <div className={s.stat}>
+                <strong>{latestWeek.deliveries}</strong>
+                <span>{t("office.weekly.deliveries")}</span>
+              </div>
+              <div className={s.stat}>
+                <strong>{latestWeek.couldntDeliver}</strong>
+                <span>{t("office.weekly.couldntDeliver")}</span>
+              </div>
+              <div className={s.stat}>
+                <strong>{latestWeek.homesWaitedOver24h}</strong>
+                <span>{t("office.weekly.waited24")}</span>
+              </div>
+              <div className={s.stat}>
+                <strong>{latestWeek.truckDownDays}</strong>
+                <span>{t("office.weekly.truckDownDays")}</span>
               </div>
             </div>
-          ))}
-        </Card>
-
-        <Card className={s.glance}>
-          <h2>{t("office.glanceHeading")}</h2>
-          {tooLongCount > 0 && (
-            <p className={s.callout} role="status">
-              {t("office.glance.waitingTooLong", { count: tooLongCount })}
-            </p>
           )}
-          <div className={s.statRow}>
-            {REQUEST_KINDS.map((k) => (
-              <Stat key={k} value={snapshot.counts.open[k]} label={t(`common.request.${k}`)} />
-            ))}
-          </div>
-          <p>
-            {snapshot.counts.oldestOpenAt != null
-              ? t("office.glance.oldest", { age: formatAge(snapshot.serverTime - snapshot.counts.oldestOpenAt) })
-              : t("office.glance.none")}
-          </p>
-        </Card>
-
-        <Card className={s.open}>
-          <h2>{t("office.openHeading")}</h2>
-          <AddRequestForm houses={snapshot.houses} onAdd={onAddRequest} />
-          {snapshot.openRequests.length === 0 ? (
-            <p>{t("office.open.empty")}</p>
-          ) : (
-            <ul className={s.openList}>
-              {snapshot.openRequests.map((r) => (
-                <li key={r.id} className={s.openRow}>
-                  <strong>{r.houseLabel}</strong>
-                  <StatusBadge tone={r.kind === "emergency" ? "emergency" : "info"} icon={<AlertTriangle />}>
-                    {t(`common.request.${r.kind}`)}
-                  </StatusBadge>
-                  <span>{t("office.open.age", { age: formatAge(snapshot.serverTime - r.createdAt) })}</span>
-                  <span>{t(`common.source.${r.source}`)}</span>
-                  {r.attempts.length > 0 && (
-                    <span>
-                      {t("office.open.attempts", {
-                        time: formatTime(r.attempts[r.attempts.length - 1].at),
-                        reason: t(`common.reason.${r.attempts[r.attempts.length - 1].reason}`),
-                      })}
-                    </span>
-                  )}
-                  <Button variant="secondary" onClick={() => onCancelRequest(r.id)}>
-                    {t("office.open.cancel")}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card className={s.map}>
-          <h2>{t("office.mapHeading")}</h2>
-          <VillageMap
-            houses={snapshot.houses}
-            openRequests={snapshot.openRequests}
-            waitingTooLong={snapshot.counts.waitingTooLong}
-            geometry={snapshot.village.geometry}
-          />
-        </Card>
-
-        <Card className={s.flags}>
-          <h2>{t("office.flagsHeading")}</h2>
-          {snapshot.flags.length === 0 ? (
-            <p>{t("office.flags.empty")}</p>
-          ) : (
-            snapshot.flags.map((flag) => <FlagCard key={flag.id} flag={flag} isNew={newFlagIds.has(flag.id)} />)
-          )}
-        </Card>
-
-        <Card className={s.human}>
-          <h2>{t("office.humanHeading")}</h2>
-          {snapshot.needsHuman.length === 0 ? (
-            <p>{t("office.human.empty")}</p>
-          ) : (
-            snapshot.needsHuman.map((note) => (
-              <NeedsHumanCard key={note.id} note={note} villageId={villageId} houses={snapshot.houses} trucks={snapshot.trucks} onConfirm={onConfirmLog} />
-            ))
-          )}
-        </Card>
-
-        <Card className={s.feed}>
-          <h2>{t("office.feedHeading")}</h2>
-          {snapshot.feed.length === 0 ? (
-            <p>{t("office.feed.empty")}</p>
-          ) : (
-            <ul className={s.feedList}>
-              {snapshot.feed.map((item) => (
-                <li key={item.id} className={s.feedRow}>
-                  <FeedRow item={item} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card className={s.lookup}>
-          <h2>{t("office.lookupHeading")}</h2>
-          <LookupPanel lookup={lookup} />
-        </Card>
-
-        <Card className={s.weekly}>
-          <h2>{t("office.weeklyHeading")}</h2>
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th scope="col">{t("office.weekly.week")}</th>
-                <th scope="col">{t("office.weekly.deliveries")}</th>
-                <th scope="col">{t("office.weekly.couldntDeliver")}</th>
-                <th scope="col">{t("office.weekly.waited24")}</th>
-                <th scope="col">{t("office.weekly.truckDownDays")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weekly.rows.map((row) => (
-                <tr key={row.weekStart}>
-                  <td>{formatDate(row.weekStart)}</td>
-                  <td>{row.deliveries}</td>
-                  <td>{row.couldntDeliver}</td>
-                  <td>{row.homesWaitedOver24h}</td>
-                  <td>{row.truckDownDays}</td>
+          <div className={s.tableScroll}>
+            <table className={s.table}>
+              <thead>
+                <tr>
+                  <th scope="col">{t("office.weekly.week")}</th>
+                  <th scope="col">{t("office.weekly.deliveries")}</th>
+                  <th scope="col">{t("office.weekly.couldntDeliver")}</th>
+                  <th scope="col">{t("office.weekly.waited24")}</th>
+                  <th scope="col">{t("office.weekly.truckDownDays")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-    </main>
+              </thead>
+              <tbody>
+                {weekly.rows.map((row) => (
+                  <tr key={row.weekStart}>
+                    <td>{formatDate(row.weekStart)}</td>
+                    <td>{row.deliveries}</td>
+                    <td>{row.couldntDeliver}</td>
+                    <td>{row.homesWaitedOver24h}</td>
+                    <td>{row.truckDownDays}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }
 
@@ -254,44 +393,51 @@ function FeedRow({ item }: { item: FeedItem }) {
   if (item.kind === "stop") {
     return (
       <span>
-        {formatTime(item.at)} · {item.stop.houseLabel} · {t(`common.outcome.${item.stop.outcome === "delivered" ? "delivered" : "failed"}`)}
+        {item.stop.houseLabel} · {t(`common.outcome.${item.stop.outcome === "delivered" ? "delivered" : "failed"}`)}
       </span>
     );
   }
   if (item.kind === "log") {
     return (
       <span>
-        {formatTime(item.at)} · {t(`common.logType.${item.entry.type}`)} · {item.entry.summary}
+        {t(`common.logType.${item.entry.type}`)} · {item.entry.summary}
       </span>
     );
   }
   if (item.kind === "request") {
     return (
       <span>
-        {formatTime(item.at)} · {item.request.houseLabel} · {t(`common.request.${item.request.kind}`)}
+        {item.request.houseLabel} · {t(`common.request.${item.request.kind}`)}
       </span>
     );
   }
   return (
     <span>
-      {formatTime(item.at)} · {item.truckId} · {item.kind === "truck_down" ? t("common.truck.down") : t("common.truck.up")}
+      {item.truckId} · {item.kind === "truck_down" ? t("common.truck.down") : t("common.truck.up")}
     </span>
   );
 }
 
-function AddRequestForm({ houses, onAdd }: { houses: Snapshot["houses"]; onAdd: (houseId: string, kind: RequestKind) => Promise<void> }) {
+function AddRequestForm({ houses, onAdd, onDone }: { houses: Snapshot["houses"]; onAdd: (houseId: string, kind: RequestKind) => Promise<void>; onDone: () => void }) {
   const [houseId, setHouseId] = useState(houses[0]?.id ?? "");
   const [kind, setKind] = useState<RequestKind>("soon");
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const first = useRef<HTMLSelectElement>(null);
+  useEffect(() => first.current?.focus(), []);
   return (
     <form
-      className={s.lookupForm}
+      className={s.formRow}
       onSubmit={async (e) => {
         e.preventDefault();
-        if (!houseId) return;
+        if (!houseId || busy) return;
         setBusy(true);
+        setFailed(false);
         try {
           await onAdd(houseId, kind);
+          onDone();
+        } catch {
+          setFailed(true);
         } finally {
           setBusy(false);
         }
@@ -299,7 +445,7 @@ function AddRequestForm({ houses, onAdd }: { houses: Snapshot["houses"]; onAdd: 
     >
       <div className={s.field}>
         <label htmlFor="add-house">{t("office.addRequest.house")}</label>
-        <select id="add-house" value={houseId} onChange={(e) => setHouseId(e.target.value)}>
+        <select id="add-house" ref={first} value={houseId} onChange={(e) => setHouseId(e.target.value)}>
           {houses.map((h) => (
             <option key={h.id} value={h.id}>
               {h.label}
@@ -318,8 +464,16 @@ function AddRequestForm({ houses, onAdd }: { houses: Snapshot["houses"]; onAdd: 
         </select>
       </div>
       <Button type="submit" disabled={busy}>
-        {t("office.addRequest.submit")} · {t("office.open.addCall")}
+        {t("office.addRequest.submit")}
       </Button>
+      <Button variant="ghost" onClick={onDone} disabled={busy}>
+        {t("office.addRequest.cancel")}
+      </Button>
+      {failed && (
+        <p role="alert" className={s.formError}>
+          {t("office.addRequest.failed")}
+        </p>
+      )}
     </form>
   );
 }
@@ -495,19 +649,10 @@ function LookupPanel({ lookup }: { lookup: ReturnType<typeof useDeliveryLookup> 
       </div>
       {error && <p role="alert">{t("office.error")}</p>}
       {rows && (
-        <div>
-          <p>{t("office.lookup.count", { count: homeCount })}</p>
-          {rows.length === 0 ? (
-            <p>{t("office.lookup.empty")}</p>
-          ) : (
-            <>
-              <ul>
-                {rows.map((r) => (
-                  <li key={r.stopId}>
-                    {r.houseLabel} · {formatTime(r.at)} · {r.truckLabel} · {r.litres} L
-                  </li>
-                ))}
-              </ul>
+        <div className={s.results}>
+          <div className={s.sectionHead}>
+            <p className={s.resultCount}>{t("office.lookup.count", { count: homeCount })}</p>
+            {rows.length > 0 && (
               <div className={s.headerLinks}>
                 <Button
                   variant="secondary"
@@ -519,9 +664,39 @@ function LookupPanel({ lookup }: { lookup: ReturnType<typeof useDeliveryLookup> 
                 >
                   {copied ? t("office.lookup.copied") : t("office.lookup.copy")}
                 </Button>
-                <a href={csvUrl}>{t("office.lookup.exportCsv")}</a>
+                <a className={s.buttonLink} href={csvUrl}>
+                  {t("office.lookup.exportCsv")}
+                </a>
               </div>
-            </>
+            )}
+          </div>
+          {rows.length === 0 ? (
+            <p className={s.empty}>{t("office.lookup.empty")}</p>
+          ) : (
+            <div className={s.tableScroll}>
+              <table className={s.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">{t("office.addRequest.house")}</th>
+                    <th scope="col">{t("office.lookup.col.time")}</th>
+                    <th scope="col">{t("office.lookup.col.truck")}</th>
+                    <th scope="col">{t("office.lookup.col.litres")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.stopId}>
+                      <td>{r.houseLabel}</td>
+                      <td>
+                        {formatDate(r.at)} {formatTime(r.at)}
+                      </td>
+                      <td>{r.truckLabel}</td>
+                      <td>{t("office.lookup.litres", { count: r.litres })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
