@@ -47,15 +47,20 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
   }
   const tooLongSet = new Set(waitingTooLong);
 
-  const xs = houses.map((h) => h.x).concat(geometry ? [0, geometry.width] : []);
-  const ys = houses.map((h) => h.y).concat(geometry ? [0, geometry.height] : []);
-  const pad = 20;
-  const minX = Math.min(0, ...xs) - pad;
-  const maxX = Math.max(10, ...xs) + pad;
-  const minY = Math.min(0, ...ys) - pad;
-  const maxY = Math.max(10, ...ys) + pad;
-  const w = maxX - minX;
-  const h = maxY - minY;
+  // Fit the view to where things are, not to the whole geometry box.
+  const points = houses.map((h) => [h.x, h.y]);
+  if (geometry) points.push([geometry.plant.x, geometry.plant.y], [geometry.garage.x, geometry.garage.y]);
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
+  const spanX = Math.max(10, Math.max(...xs) - Math.min(...xs));
+  const spanY = Math.max(10, Math.max(...ys) - Math.min(...ys));
+  // Symbols are drawn in a small unit space and scaled up, so they stay readable whatever the map's size in metres.
+  const k = Math.max(spanX, spanY) / 260;
+  const pad = 22 * k;
+  const minX = Math.min(...xs) - pad;
+  const minY = Math.min(...ys) - pad;
+  const w = spanX + pad * 2;
+  const h = spanY + pad * 2;
 
   return (
     <div>
@@ -72,13 +77,13 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
         ))}
         {geometry && (
           <>
-            <g transform={`translate(${geometry.plant.x} ${geometry.plant.y})`}>
+            <g transform={`translate(${geometry.plant.x} ${geometry.plant.y}) scale(${k})`}>
               <rect className={s.plant} x={-6} y={-6} width={12} height={12} />
               <text className={s.label} y={14}>
                 Plant
               </text>
             </g>
-            <g transform={`translate(${geometry.garage.x} ${geometry.garage.y})`}>
+            <g transform={`translate(${geometry.garage.x} ${geometry.garage.y}) scale(${k})`}>
               <rect className={s.garage} x={-6} y={-6} width={12} height={12} />
               <text className={s.label} y={14}>
                 Garage
@@ -90,7 +95,7 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
           const reqs = byHouse.get(house.id) ?? [];
           const anyTooLong = reqs.some((r) => tooLongSet.has(r.id));
           return (
-            <g key={house.id} transform={`translate(${house.x} ${house.y})`}>
+            <g key={house.id} transform={`translate(${house.x} ${house.y}) scale(${k})`}>
               <circle className={s.house} r={4} />
               {anyTooLong && <circle className={s.tooLong} r={8} />}
               {reqs.map((r, i) => (
@@ -102,7 +107,7 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
                 </g>
               ))}
               <text className={s.label} y={16}>
-                {house.label}
+                {house.label.replace(/^House\s+/, "")}
               </text>
             </g>
           );
