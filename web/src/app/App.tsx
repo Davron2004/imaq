@@ -6,6 +6,7 @@ import { currentVillageId } from "../data/village";
 
 const Hub = lazy(() => import("../screens/hub/HubScreen"));
 const Resident = lazy(() => import("../screens/resident/ResidentScreen"));
+const ResidentEntry = lazy(() => import("../screens/resident/ResidentEntry"));
 const Driver = lazy(() => import("../screens/driver/DriverScreen"));
 const Office = lazy(() => import("../screens/office/OfficeScreen"));
 const Sim = lazy(() => import("../screens/sim/SimScreen"));
@@ -34,6 +35,7 @@ function VillageGuard({ children }: { children: React.ReactNode }) {
 const router = createBrowserRouter([
   { path: "/", element: <Hub /> },
   { path: "/h/:token", element: <Resident /> },
+  { path: "/resident", element: <ResidentEntry /> },
   { path: "/sim", element: <Sim /> },
   { path: "/driver", element: <ToVillage page="driver" /> },
   { path: "/office", element: <ToVillage page="office" /> },

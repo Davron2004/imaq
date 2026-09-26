@@ -27,11 +27,11 @@ export function StopSheetView({ vm, recorder, onLitres, onDelivered, onReason, o
         <h3 id="stop-litres" className={s.h2}>{t("driver.stop.litres")}</h3>
         <div className={s.stepper}>
           <button type="button" className={s.stepBtn} aria-label={t("driver.stop.minus")} onClick={() => onLitres(Math.max(0, vm.litres - 100))}>
-            <Minus aria-hidden="true" /> 100
+            <Minus aria-hidden="true" /> <span>100</span>
           </button>
           <output className={s.litres} aria-live="polite">{vm.litres.toLocaleString("en-CA")} L</output>
           <button type="button" className={s.stepBtn} aria-label={t("driver.stop.plus")} onClick={() => onLitres(Math.min(20000, vm.litres + 100))}>
-            <Plus aria-hidden="true" /> 100
+            <Plus aria-hidden="true" /> <span>100</span>
           </button>
         </div>
         <Chip selected={vm.litres === vm.fullTankLitres} onClick={() => onLitres(vm.fullTankLitres)}>
@@ -52,7 +52,7 @@ export function StopSheetView({ vm, recorder, onLitres, onDelivered, onReason, o
           <summary className={s.linkBtn}>{vm.voiceAttached ? t("driver.voice.attached") : t("driver.stop.voice")}</summary>
           {recorder}
         </details>
-        <Button size="hero" variant="danger" block icon={<Ban />} onClick={onFailed} disabled={!vm.reason}>
+        <Button size="hero" variant={vm.reason ? "danger" : "secondary"} block icon={<Ban />} onClick={onFailed} disabled={!vm.reason}>
           {vm.reason ? `${t("common.outcome.failed")} · ${t(`common.reason.${vm.reason}`)}` : t("driver.stop.pickReason")}
         </Button>
       </section>

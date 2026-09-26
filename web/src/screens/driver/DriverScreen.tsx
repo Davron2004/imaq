@@ -13,7 +13,8 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
-import { ArrowLeft, Lightbulb, ListChecks, Mic, Truck as TruckIcon, ClipboardList, Inbox } from "lucide-react";
+import { ArrowLeft, Lightbulb, ListChecks, Mic, Truck as TruckIcon, ClipboardList, Inbox, Moon, Sun } from "lucide-react";
+import { PhoneHeader } from "../shared/SiteHeader";
 import { CHECK_ITEMS, truckKindFor, type CheckItem, type FailReason, type LogFields, type OpenRequest, type TruckCategory } from "../../../../shared/types";
 import { formatDay, formatTime, t } from "../../i18n";
 import { useNow } from "../../data/driver/hooks";
@@ -39,6 +40,33 @@ import { NotesView } from "./views/NotesView";
 import s from "./driver.module.css";
 
 const skippedCheck = new Set<string>();
+const THEME_KEY = "imaq.driverTheme";
+
+/** Night mode: persisted per phone, applied to <html> only while the driver app is mounted. */
+function useDriverTheme() {
+  const [dark, setDark] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_KEY) === "dark";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    try {
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+    } catch {
+      /* private mode */
+    }
+  }, [dark]);
+  useEffect(
+    () => () => {
+      document.documentElement.dataset.theme = "light";
+    },
+    [],
+  );
+  return [dark, () => setDark((d) => !d)] as const;
+}
 const nf = new Intl.NumberFormat("en-CA");
 
 export default function DriverScreen() {
@@ -47,14 +75,22 @@ export default function DriverScreen() {
   const [syncOpen, setSyncOpen] = useState(false);
   const { data } = app;
   const { pathname } = useLocation();
+  const [dark, toggleTheme] = useDriverTheme();
+  const base = `/v/${encodeURIComponent(villageId)}/driver`;
+  const path = pathname.replace(/\/+$/, "");
+  const section = path === base ? "today" : path === `${base}/done` ? "done" : path === `${base}/voice` ? "voice" : null;
 
   return (
     <DriverCtx.Provider value={app}>
       <div className={s.shell}>
-        <SyncStatusView vm={app.sync} onOpen={() => setSyncOpen(true)} />
         <div className={s.srOnly} aria-live="polite" role="status" data-testid="announcer">{app.announcement}</div>
         <div className={s.srOnly} aria-live="polite" data-testid="announcer-sync">{app.syncAnnouncement}</div>
         <main className={s.main}>
+          <div className={s.top}>
+            <PhoneHeader role={t("driver.title")} />
+            <SyncStatusView vm={app.sync} onOpen={() => setSyncOpen(true)} />
+          </div>
+          {data.snapshot && app.truck && section && <SectionNav base={base} active={section} />}
           {!data.loaded ? (
             <p>{t("driver.loading")}</p>
           ) : !data.snapshot ? (
@@ -66,15 +102,17 @@ export default function DriverScreen() {
               <Route path="check" element={<Check />} />
               <Route path="lit" element={<Sub><LitDoor /></Sub>} />
               <Route path="truck" element={<Sub><TruckStatus /></Sub>} />
-              <Route path="voice" element={<Sub><FreeVoice /></Sub>} />
-              <Route path="done" element={<Sub><Done /></Sub>} />
+              <Route path="voice" element={<Sub tab><FreeVoice /></Sub>} />
+              <Route path="done" element={<Sub tab><Done /></Sub>} />
               <Route path="inbox" element={<Sub><InboxPage /></Sub>} />
               <Route path="inbox/:noteId" element={<Sub><Card /></Sub>} />
               <Route path="*" element={<Navigate to="." replace />} />
             </Routes>
           )}
+          <button type="button" className={s.themeBtn} aria-pressed={dark} onClick={toggleTheme}>
+            {dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />} {t("driver.theme.night")}
+          </button>
         </main>
-        {data.snapshot && app.truck && !/\/(pick|check)$/.test(pathname) && <Dock />}
         {app.undo && <UndoBarView text={app.undo.text} onUndo={app.doUndo} />}
         <SheetView open={syncOpen} title={t("driver.sync.detailsTitle")} onClose={() => setSyncOpen(false)}>
           <SyncDetails />
@@ -89,30 +127,50 @@ function useBase() {
   return `/v/${encodeURIComponent(villageId)}/driver`;
 }
 
-function Sub({ children }: { children: ReactNode }) {
+/** A sub-page: needs a truck; `tab` pages sit under the section nav instead of a Back link. */
+function Sub({ children, tab }: { children: ReactNode; tab?: boolean }) {
   const base = useBase();
   const { truck } = useDriver();
   if (!truck) return <Navigate to={`${base}/pick`} replace />;
   return (
     <>
-      <Link to={base} className={s.linkBtn}><ArrowLeft aria-hidden="true" /> {t("driver.back")}</Link>
+      {!tab && <Link to={base} className={s.linkBtn}><ArrowLeft aria-hidden="true" /> {t("driver.nav.todayList")}</Link>}
       {children}
     </>
   );
 }
 
-function Dock() {
-  const base = useBase();
+/** Reference driver nav: Today's list / Done today / Voice notes. Tools (lit door, voice, truck) live on the list. */
+function SectionNav({ base, active }: { base: string; active: "today" | "done" | "voice" }) {
+  const items: [typeof active, string, string, ReactNode][] = [
+    ["today", base, t("driver.nav.todayList"), <ListChecks aria-hidden="true" />],
+    ["done", `${base}/done`, t("driver.nav.done"), <ClipboardList aria-hidden="true" />],
+    ["voice", `${base}/voice`, t("driver.nav.notes"), <Mic aria-hidden="true" />],
+  ];
   return (
-    <nav className={s.dock} aria-label={t("driver.title")}>
-      <Link to={base}><ListChecks aria-hidden="true" />{t("driver.nav.today")}</Link>
-      <Link to={`${base}/lit`}><Lightbulb aria-hidden="true" />{t("driver.nav.litDoor")}</Link>
-      <Link to={`${base}/voice`}><Mic aria-hidden="true" />{t("driver.nav.voice")}</Link>
-      <Link to={`${base}/truck`}><TruckIcon aria-hidden="true" />{t("driver.nav.truck")}</Link>
-      <Link to={`${base}/done`}><ClipboardList aria-hidden="true" />{t("driver.nav.done")}</Link>
+    <nav className={s.nav} aria-label={t("driver.nav.label")}>
+      {items.map(([id, to, label, icon]) => (
+        <Link key={id} to={to} aria-current={active === id ? "page" : undefined}>
+          {icon}
+          <span>{label}</span>
+        </Link>
+      ))}
     </nav>
   );
 }
+
+function Tools() {
+  const base = useBase();
+  return (
+    <div className={s.tools}>
+      <Link to={`${base}/lit`}><Lightbulb aria-hidden="true" />{t("driver.nav.litDoor")}</Link>
+      <Link to={`${base}/voice`}><Mic aria-hidden="true" />{t("driver.nav.voice")}</Link>
+      <Link to={`${base}/truck`}><TruckIcon aria-hidden="true" />{t("driver.nav.truck")}</Link>
+    </div>
+  );
+}
+
+
 
 // sync ---------------------------------------------------------------------------
 
@@ -248,6 +306,8 @@ function TodayList() {
       )}
       <ListView
         vm={vm}
+        tools={<Tools />}
+        truckLink={<Link to={`${base}/truck`} className={s.linkBtn}><TruckIcon aria-hidden="true" /> {truck.label}</Link>}
         onOpenStop={(id) => {
           const r = snap.openRequests.find((x) => x.id === id);
           if (r) setStop({ request: r, litres: r.litres, reason: null, voiceNoteId: null });

@@ -25,8 +25,10 @@ export function TruckStatusView({ vm, recorder, onReason, onDown, onBack, onRech
   return (
     <div className={s.stack}>
       <h1 className={s.h1}>{t("driver.truck.title", { truck: vm.truckLabel })}</h1>
-      <p className={`${s.kind} ${s.h2}`}>
-        {vm.down ? <CircleAlert aria-hidden="true" /> : <CircleCheck aria-hidden="true" />} {vm.statusText}
+      <p>
+        <span className={`${s.tag} ${vm.down ? s.statusDown : s.statusOk}`}>
+          {vm.down ? <CircleAlert aria-hidden="true" /> : <CircleCheck aria-hidden="true" />} {vm.statusText}
+        </span>
       </p>
       {vm.historyText && <p className={s.muted}>{vm.historyText}</p>}
       {vm.down ? (
@@ -43,7 +45,7 @@ export function TruckStatusView({ vm, recorder, onReason, onDown, onBack, onRech
             <summary className={s.linkBtn}>{vm.voiceAttached ? t("driver.voice.attached") : t("driver.truck.voice")}</summary>
             {recorder}
           </details>
-          <Button size="hero" variant="danger" block icon={<CircleAlert />} disabled={!vm.reason} onClick={onDown}>
+          <Button size="hero" variant={vm.reason ? "danger" : "secondary"} block icon={<CircleAlert />} disabled={!vm.reason} onClick={onDown}>
             {t("driver.truck.markDown", { truck: vm.truckLabel })}
           </Button>
         </>

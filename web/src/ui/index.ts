@@ -5,3 +5,4 @@ export type { Tone } from "./StatusBadge";
 export { Card } from "./Card";
 export { Stat } from "./Stat";
 export { Chip } from "./Chip";
+export { Logo } from "./Logo";
