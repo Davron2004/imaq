@@ -1,0 +1,9 @@
+.chip {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap-driver); padding: var(--s-2) var(--s-4);
+  border: var(--border-w) solid var(--c-border); border-radius: 999px;
+  background: var(--c-bg); color: var(--c-text); font-weight: var(--fw-bold); cursor: pointer;
+}
+.on { background: var(--c-primary); color: var(--c-primary-text); border-color: var(--c-primary); }
+.mark { display: inline-flex; min-width: 1em; }
+.mark svg { width: 1.2em; height: 1.2em; }

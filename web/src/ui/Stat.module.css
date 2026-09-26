@@ -1,0 +1,5 @@
+.stat { display: flex; flex-direction: column; gap: var(--s-1); }
+.value { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; line-height: 1; }
+.label { color: var(--c-text-muted); font-size: var(--fs-sm); }
+.md .value { font-size: var(--fs-2xl); }
+.lg .value { font-size: var(--fs-3xl); }

@@ -1,0 +1,106 @@
+/*
+ * Design tokens. Owned by the UI design session (docs/ui-handoff.md, appendix).
+ * v0 is deliberately plain: high contrast, large type, big targets.
+ * Components use only these variables, never raw colours or sizes.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* colour */
+  --c-bg: #ffffff;
+  --c-surface: #f3f5f7;
+  --c-surface-2: #e6eaee;
+  --c-text: #0d1b24;
+  --c-text-muted: #3d4d58;
+  --c-border: #5b6b76;
+  --c-primary: #0b3d5c;
+  --c-primary-text: #ffffff;
+  --c-focus: #b35c00;
+  --c-danger: #a3161b;
+  --c-danger-text: #ffffff;
+  --c-warn: #7a4a00;
+  --c-warn-bg: #fff1d6;
+  --c-ok: #1d5e2b;
+  --c-ok-bg: #e2f3e5;
+  --c-info-bg: #e3eef7;
+  --c-emergency: #a3161b;
+  --c-emergency-bg: #fde8e8;
+
+  /* type (rem so the phone's text-size setting scales everything) */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Canadian Aboriginal", sans-serif;
+  --fs-sm: 0.9375rem;
+  --fs-base: 1.125rem;
+  --fs-lg: 1.375rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: 2.5rem;
+  --fs-3xl: 3.5rem;
+  --fw-normal: 400;
+  --fw-bold: 700;
+  --lh: 1.4;
+
+  /* space */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+
+  /* shape */
+  --radius: 0.625rem;
+  --radius-lg: 1rem;
+  --border-w: 2px;
+  --focus-ring: 0 0 0 3px var(--c-bg), 0 0 0 6px var(--c-focus);
+
+  /* targets */
+  --tap-min: 48px;
+  --tap-driver: 64px;
+  --tap-hero: 88px;
+
+  /* motion */
+  --dur: 150ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-bg: #0b1217;
+    --c-surface: #152029;
+    --c-surface-2: #1f2d38;
+    --c-text: #f2f5f7;
+    --c-text-muted: #c2ccd3;
+    --c-border: #8d9ca6;
+    --c-primary: #7cc4f0;
+    --c-primary-text: #06141d;
+    --c-focus: #ffb454;
+    --c-danger: #ff8a8a;
+    --c-danger-text: #1a0203;
+    --c-warn: #ffcf7a;
+    --c-warn-bg: #3a2a08;
+    --c-ok: #8fdc9f;
+    --c-ok-bg: #0f2e17;
+    --c-info-bg: #13283a;
+    --c-emergency: #ff8a8a;
+    --c-emergency-bg: #3a0d0f;
+  }
+}
+:root[data-theme="dark"] {
+  --c-bg: #0b1217;
+  --c-surface: #152029;
+  --c-surface-2: #1f2d38;
+  --c-text: #f2f5f7;
+  --c-text-muted: #c2ccd3;
+  --c-border: #8d9ca6;
+  --c-primary: #7cc4f0;
+  --c-primary-text: #06141d;
+  --c-focus: #ffb454;
+  --c-danger: #ff8a8a;
+  --c-danger-text: #1a0203;
+  --c-warn: #ffcf7a;
+  --c-warn-bg: #3a2a08;
+  --c-ok: #8fdc9f;
+  --c-ok-bg: #0f2e17;
+  --c-info-bg: #13283a;
+  --c-emergency: #ff8a8a;
+  --c-emergency-bg: #3a0d0f;
+}

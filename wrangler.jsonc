@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "imaq",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "imaq",
+      "database_id": "87dfd820-2723-40fb-8caa-2355c71d4c7e",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
+  "ai": { "binding": "AI", "remote": true },
+  "vars": { "PRESENTER_VILLAGE_ID": "demo" },
+  "observability": { "enabled": true }
+}
