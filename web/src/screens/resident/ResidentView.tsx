@@ -5,6 +5,9 @@ import s from "./Resident.module.css";
 import type { ResidentView as ResidentViewModel, RequestKind } from "../../../../shared/types";
 import type { PendingConfirm, ResidentTrack } from "../../data/resident";
 
+/** "Delivered 14:20" shows for this long; after that the last-delivery line says it with the day. */
+const RECENTLY_CLOSED_MS = 6 * 60 * 60 * 1000;
+
 const KIND_ICON: Record<RequestKind, React.ReactNode> = {
   soon: <Droplet />,
   out: <Droplets />,
@@ -76,7 +79,7 @@ export default function ResidentView(props: ResidentViewProps) {
         {sendError ? t("resident.sendFailed.title") : ""}
       </div>
 
-      {view.lastClosed && (
+      {view.lastClosed && view.serverTime - view.lastClosed.at < RECENTLY_CLOSED_MS && (
         <Card className={s.openCard} role="status">
           {view.lastClosed.status === "served"
             ? t("resident.lastClosed.served", { time: formatTime(view.lastClosed.at) })

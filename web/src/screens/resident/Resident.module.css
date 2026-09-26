@@ -14,14 +14,20 @@
 }
 .grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--s-3);
   margin-bottom: var(--s-5);
 }
 .tile {
-  flex-direction: column;
-  gap: var(--s-2);
-  height: 6.5rem;
+  justify-content: flex-start;
+  gap: var(--s-3);
+  min-height: 5rem;
+  text-align: left;
+}
+/* Whole words only: "Emergency" must never break mid-word. */
+.tile span {
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 .tile.emergency {
   background: var(--c-emergency);
