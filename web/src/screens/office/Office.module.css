@@ -1,0 +1,128 @@
+.page {
+  padding: var(--s-4);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-4);
+  justify-content: space-between;
+  margin-bottom: var(--s-4);
+}
+.headerLinks {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--s-4);
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.truckRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid var(--c-surface-2);
+}
+.statRow {
+  display: flex;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-3);
+}
+.callout {
+  background: var(--c-warn-bg);
+  color: var(--c-warn);
+  border: var(--border-w) solid var(--c-warn);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  font-weight: var(--fw-bold);
+  margin-bottom: var(--s-3);
+}
+.openList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.openRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--c-surface-2);
+}
+.openRow > * {
+  flex-shrink: 0;
+}
+.flagCard {
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.flagNew {
+  border-color: var(--c-danger);
+  background: var(--c-emergency-bg);
+}
+.feedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+.feedRow {
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid var(--c-surface-2);
+  font-size: var(--fs-sm);
+}
+.lookupForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  align-items: end;
+  margin-bottom: var(--s-3);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.field label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+.field input,
+.field select {
+  min-height: var(--tap-min);
+  padding: var(--s-2);
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius);
+  font-size: var(--fs-base);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--s-2);
+  border-bottom: 1px solid var(--c-surface-2);
+}
+.humanCard {
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--s-3);
+  margin-bottom: var(--s-3);
+}

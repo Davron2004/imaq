@@ -1,0 +1,47 @@
+.page {
+  padding: var(--s-5);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-5);
+}
+.card {
+  border: 2px solid var(--c-text);
+  border-radius: var(--radius);
+  padding: var(--s-4);
+  text-align: center;
+  break-inside: avoid;
+}
+.card svg {
+  width: 100%;
+  height: auto;
+}
+.label {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  margin: var(--s-2) 0 0;
+}
+.instruction {
+  margin: var(--s-1) 0 0;
+}
+.printBtn {
+  margin-bottom: var(--s-4);
+}
+@media print {
+  .printBtn {
+    display: none;
+  }
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+}
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

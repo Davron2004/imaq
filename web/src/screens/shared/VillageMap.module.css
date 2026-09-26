@@ -1,0 +1,78 @@
+.svg {
+  width: 100%;
+  height: auto;
+  max-height: 26rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-surface-2);
+  border-radius: var(--radius);
+}
+.house {
+  fill: var(--c-text-muted);
+}
+.road {
+  fill: none;
+  stroke: var(--c-border);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+.plant {
+  fill: var(--c-info-bg);
+  stroke: var(--c-primary);
+  stroke-width: 1;
+}
+.garage {
+  fill: var(--c-surface-2);
+  stroke: var(--c-text);
+  stroke-width: 1;
+}
+.tooLong {
+  fill: none;
+  stroke: var(--c-danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2;
+}
+.label {
+  font-size: 6px;
+  fill: var(--c-text);
+  text-anchor: middle;
+}
+.markLetter {
+  font-size: 6px;
+  font-weight: bold;
+  fill: var(--c-bg);
+  text-anchor: middle;
+}
+.mark {
+  stroke: var(--c-text);
+  stroke-width: 1;
+}
+.soon {
+  fill: var(--c-info-bg);
+  stroke: var(--c-primary);
+}
+.out {
+  fill: var(--c-warn-bg);
+  stroke: var(--c-warn);
+}
+.emergency {
+  fill: var(--c-emergency-bg);
+  stroke: var(--c-emergency);
+}
+.sewage {
+  fill: var(--c-surface-2);
+  stroke: var(--c-border);
+}
+.listToggle {
+  margin-top: var(--s-2);
+  background: none;
+  border: none;
+  color: var(--c-primary);
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: var(--tap-min);
+  font-size: var(--fs-sm);
+}
+.list {
+  font-size: var(--fs-sm);
+  padding-left: var(--s-5);
+}
