@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
-import { Play } from "lucide-react";
-import { Button } from "../../ui";
 import { t } from "../../i18n";
 import type { WorldId } from "../../sim/engine";
 import { useSimRunner } from "../../sim/render/useSimRunner";
 import { VillageMap } from "../../sim/render/VillageMap";
-import { Assumptions, AssumptionsButton, Controls, Counters, Legend, Summary, Ticker, Timeline, TruckList } from "../../sim/render/Panels";
+import { Assumptions, AssumptionsButton, Clock, Controls, Counters, Legend, Summary, Ticker, Timeline, TruckList } from "../../sim/render/Panels";
+import { SiteHeader } from "../shared/SiteHeader";
 import s from "../../sim/render/sim.module.css";
 
 const SEED = 1;
 
+/**
+ * Runner states (see useSimRunner): paused at 0 -> playing -> paused ... -> finished (summary
+ * over the panes, Play disabled) -> Replay (playing from 0) or Restart (paused at 0).
+ * Timeline markers seek from any state and leave the play state as it was.
+ */
 export default function SimView() {
   const r = useSimRunner(SEED);
   const { sim } = r;
@@ -29,7 +33,6 @@ export default function SimView() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const started = st.minute > 0 || r.playing;
   const daysDone = st.worlds.today.daily.length;
   const lastDay = daysDone > 0 ? daysDone : 0;
   const srText =
@@ -50,13 +53,12 @@ export default function SimView() {
     const lit = w.houses.filter((h) => h.lightOn).length;
     const trucks = w.trucks.map((tr) => t("sim.truckLine", { n: tr.id + 1, state: t(`sim.truckState.${tr.state}`) })).join(". ");
     return (
-      <section className={s.pane} aria-labelledby={`pane-${id}`}>
-        <header className={s.paneHead}>
-          <h2 id={`pane-${id}`} className={s.paneTitle}>{t(`sim.${id}.title`)}</h2>
-          <p className={s.paneSub}>{t(`sim.${id}.sub`)}</p>
-        </header>
-        <Counters metrics={w.metrics} />
-        <div className={s.paneBody}>
+      <div className={s.col}>
+        <section className={s.pane} aria-labelledby={`pane-${id}`}>
+          <header className={s.paneHead}>
+            <h2 id={`pane-${id}`} className={`eyebrow ${s.paneEyebrow}`}>{t(`sim.${id}.title`)}</h2>
+            <p className={s.paneDesc}>{t(`sim.${id}.desc`)}</p>
+          </header>
           <figure className={s.mapWrap}>
             <VillageMap
               village={st.village}
@@ -71,50 +73,48 @@ export default function SimView() {
             />
             <figcaption className={s.mapCaption}>{t("sim.mapLabel")}</figcaption>
           </figure>
-          <div className={s.side}>
-            <TruckList trucks={w.trucks} />
-            {id === "imaq" && <Ticker state={st} />}
-          </div>
-        </div>
-      </section>
+          <Counters metrics={w.metrics} />
+        </section>
+        <TruckList trucks={w.trucks} label={t("sim.trucksLabel", { world: t(`sim.${id}.title`) })} />
+      </div>
     );
   };
 
   return (
-    <main className={s.root}>
-      <header className={s.top}>
-        <h1 className={s.srOnly}>{t("sim.title")}</h1>
-        <AssumptionsButton onOpen={() => setAssumptionsOpen(true)} />
-        <Controls
-          playing={r.playing}
-          done={st.done}
-          onToggle={r.toggle}
-          onRestart={() => r.reset(0, false)}
-          speed={r.speed}
-          onSpeed={r.setSpeed}
-        />
-      </header>
-      <Timeline state={st} onSeek={r.seek} />
-      <div className={s.panes}>
-        {pane("today")}
-        {pane("imaq")}
-        {!started && (
-          <div className={s.startOverlay}>
-            <Button size="hero" icon={<Play />} onClick={() => r.setPlaying(true)}>
-              {t("sim.play")}
-            </Button>
-            <p>{t("sim.startHint")}</p>
+    <div className={s.page}>
+      <SiteHeader />
+      <main className={s.root}>
+        <div className={s.heading}>
+          <div className={s.headingText}>
+            <AssumptionsButton onOpen={() => setAssumptionsOpen(true)} />
+            <h1 className={s.title}>{t("sim.pageTitle")}</h1>
+            <p className={s.subtitle}>{t("sim.pageSub")}</p>
           </div>
-        )}
-        {st.done && (
-          <div className={s.summaryOverlay}>
-            <Summary today={st.worlds.today} imaq={st.worlds.imaq} onReplay={() => r.reset(0, true)} onAssumptions={() => setAssumptionsOpen(true)} />
-          </div>
-        )}
-      </div>
-      <Legend />
-      <p className={s.srOnly} aria-live="polite">{srText}</p>
-      <Assumptions open={assumptionsOpen} onClose={() => setAssumptionsOpen(false)} />
-    </main>
+          <Controls
+            playing={r.playing}
+            done={st.done}
+            onToggle={r.toggle}
+            onRestart={() => r.reset(0, false)}
+            speed={r.speed}
+            onSpeed={r.setSpeed}
+          />
+        </div>
+        <Clock state={st} />
+        <Timeline state={st} onSeek={r.seek} />
+        <div className={s.panes}>
+          {pane("today")}
+          {pane("imaq")}
+          {st.done && (
+            <div className={s.summaryOverlay}>
+              <Summary today={st.worlds.today} imaq={st.worlds.imaq} onReplay={() => r.reset(0, true)} onAssumptions={() => setAssumptionsOpen(true)} />
+            </div>
+          )}
+        </div>
+        <Ticker state={st} />
+        <Legend />
+        <p className={s.srOnly} aria-live="polite">{srText}</p>
+        <Assumptions open={assumptionsOpen} onClose={() => setAssumptionsOpen(false)} />
+      </main>
+    </div>
   );
 }

@@ -4,8 +4,13 @@ import type { HouseState, TruckState, TruckStateObj, Village, WorldId } from "..
 import { t } from "../../i18n";
 import s from "./sim.module.css";
 
-const HW = 112; // house width in map metres
-const HH = 100;
+/**
+ * House glyphs are drawn in the design reference's own units (a 30-unit-wide outlined house)
+ * and scaled up into map metres, so stroke weights match the reference.
+ */
+const K = 3; // reference units -> map metres
+const ROAD_HALF = 28; // half the drawn road width, map metres
+const SETBACK = 12; // clear gap between road edge and the nearest part of a house
 const JUST_DELIVERED_MIN = 60;
 
 export const TRUCK_ICON: Record<TruckState, typeof Eye> = {
@@ -20,8 +25,13 @@ export const TRUCK_ICON: Record<TruckState, typeof Eye> = {
   held: Snowflake,
 };
 
-/** One house glyph. Every state has its own shape, not only a colour. */
-export function HouseGlyph({ x, y, level, lit, dry, delivered, emergency, app }: {
+/**
+ * One house, in reference units around (0,0): roof peak at y=-20, body bottom at y=10.
+ * Each state has its own shape so it survives greyscale: dry = × and red outline,
+ * lit door = ring beside the roof, delivered = thick outline plus a check, emergency = triangle with "!",
+ * app = short line under the house.
+ */
+export function HouseGlyph({ x, y, level, lit, dry, delivered, emergency, app, scale = K }: {
   x: number;
   y: number;
   level: number; // 0..1
@@ -30,45 +40,36 @@ export function HouseGlyph({ x, y, level, lit, dry, delivered, emergency, app }:
   delivered: boolean;
   emergency: boolean;
   app: boolean;
+  scale?: number;
 }) {
-  const bx = x - HW / 2;
-  const by = y - HH / 2;
-  const barH = (HH - 20) * Math.max(0, Math.min(1, level));
+  const ratio = Math.max(0, Math.min(1, level));
+  const cls = dry ? s.houseDry : delivered ? s.houseDelivered : s.house;
   return (
-    <g>
-      {/* roof */}
-      <polygon points={`${bx - 8},${by} ${x},${by - 34} ${bx + HW + 8},${by}`} className={dry ? s.roofDry : s.roof} />
-      <rect x={bx} y={by} width={HW} height={HH} className={dry ? s.bodyDry : s.body} />
-      {/* tank bar */}
-      {!dry && <rect x={bx + 14} y={by + 10 + (HH - 20 - barH)} width={HW - 28} height={barH} className={s.tank} />}
-      {!dry && <rect x={bx + 14} y={by + 10} width={HW - 28} height={HH - 20} className={s.tankOutline} />}
-      {dry && (
-        <path d={`M${bx + 16},${by + 14} L${bx + HW - 16},${by + HH - 14} M${bx + HW - 16},${by + 14} L${bx + 16},${by + HH - 14}`} className={s.dryX} />
-      )}
-      {lit && !emergency && (
-        <g className={s.light}>
-          <path
-            d={`M${x},${by - 118} v14 M${x},${by - 30} v-2 M${x - 52},${by - 72} h14 M${x + 52},${by - 72} h-14 M${x - 38},${by - 108} l10,10 M${x + 38},${by - 108} l-10,10`}
-            className={s.rays}
-          />
-          <circle cx={x} cy={by - 72} r={30} />
-        </g>
-      )}
+    <g transform={`translate(${x},${y}) scale(${scale})`}>
+      <path d="M-15,-8 L0,-20 L15,-8 V10 H-15 Z" className={cls} />
+      {!dry && ratio > 0 && <rect x={-11} y={8 - 14 * ratio} width={22} height={14 * ratio} className={s.tankFill} />}
+      {dry && <path d="M-5,-6 L5,4 M5,-6 L-5,4" className={s.dryMark} />}
+      {lit && <circle cx={21} cy={-12} r={5} className={s.doorMark} />}
+      {delivered && !dry && <path d="M16,2 l3,3 l6,-7" className={s.checkMark} />}
       {emergency && (
         <g>
-          <polygon points={`${x},${by - 124} ${x + 44},${by - 44} ${x - 44},${by - 44}`} className={s.emerg} />
-          <text x={x} y={by - 54} textAnchor="middle" className={s.emergText}>!</text>
+          <path d="M-22,-24 L-30,-9 H-14 Z" className={s.emergencyMark} />
+          <path d="M-22,-19 v5 M-22,-11.6 v0.1" className={s.emergencyBang} />
         </g>
       )}
-      {delivered && !lit && !emergency && (
-        <g>
-          <circle cx={x} cy={by - 72} r={32} className={s.deliveredDot} />
-          <path d={`M${x - 16},${by - 72} l10,13 l21,-26`} className={s.check} />
-        </g>
-      )}
-      {app && <circle cx={x} cy={by + HH + 18} r={11} className={s.appDot} />}
+      {app && <path d="M-6,15 h12" className={s.appMark} />}
     </g>
   );
+}
+
+/**
+ * Houses are set back beside their street, never on it: the engine's house point sits on the
+ * street line, and `side` says which side of the street the lot is on. Above the street (-1) the
+ * glyph's lowest part (the app line, y=+15) clears the road edge; below it (+1) the roof peak does.
+ */
+function houseAnchorY(streetY: number, side: -1 | 1): number {
+  const clear = ROAD_HALF + SETBACK;
+  return side > 0 ? streetY + clear + 20 * K : streetY - clear - 17 * K;
 }
 
 const Houses = memo(function Houses({ village, houses, minute, world }: { village: Village; houses: HouseState[]; minute: number; world: WorldId; version: number }) {
@@ -76,18 +77,24 @@ const Houses = memo(function Houses({ village, houses, minute, world }: { villag
     <g>
       {village.houses.map((hs) => {
         const h = houses[hs.id];
+        const ay = houseAnchorY(hs.y, hs.side);
+        // Short driveway from the road edge to the house.
+        const dy1 = hs.y + hs.side * ROAD_HALF;
+        const dy2 = hs.side > 0 ? ay - 8 * K : ay + 10 * K;
         return (
-          <HouseGlyph
-            key={hs.id}
-            x={hs.x}
-            y={hs.y + hs.side * 88}
-            level={h.levelL / hs.tankL}
-            lit={h.lightOn}
-            dry={h.dry}
-            emergency={h.emergency}
-            delivered={h.lastDeliveredAt >= 0 && minute - h.lastDeliveredAt < JUST_DELIVERED_MIN}
-            app={world === "imaq" && hs.usesApp}
-          />
+          <g key={hs.id}>
+            <line x1={hs.x} x2={hs.x} y1={dy1} y2={dy2} className={s.driveway} />
+            <HouseGlyph
+              x={hs.x}
+              y={ay}
+              level={h.levelL / hs.tankL}
+              lit={h.lightOn}
+              dry={h.dry}
+              emergency={h.emergency}
+              delivered={h.lastDeliveredAt >= 0 && minute - h.lastDeliveredAt < JUST_DELIVERED_MIN}
+              app={world === "imaq" && hs.usesApp}
+            />
+          </g>
         );
       })}
     </g>
@@ -100,14 +107,14 @@ const Roads = memo(function Roads({ village }: { village: Village }) {
   const [x1, x2] = village.streetSpan;
   const y1 = village.streets[0];
   const y2 = village.streets[village.streets.length - 1];
+  const segs = [
+    ...village.streets.map((y) => `M${x1},${y} H${x2}`),
+    ...village.avenues.map((x) => `M${x},${y1} V${y2}`),
+  ].join(" ");
   return (
-    <g className={s.road}>
-      {village.streets.map((y) => (
-        <line key={`s${y}`} x1={x1} x2={x2} y1={y} y2={y} />
-      ))}
-      {village.avenues.map((x) => (
-        <line key={`a${x}`} x1={x} x2={x} y1={y1} y2={y2} />
-      ))}
+    <g>
+      <path d={segs} className={s.roadEdge} />
+      <path d={segs} className={s.roadLine} />
     </g>
   );
 });
@@ -117,9 +124,18 @@ export function TruckGlyph({ x, y, n, state }: { x: number; y: number; n: number
   const broken = state === "down";
   return (
     <g transform={`translate(${x},${y})`}>
-      <rect x={-78} y={-50} width={156} height={100} rx={18} className={broken ? s.truckDown : s.truck} />
-      <text x={-38} y={28} textAnchor="middle" className={s.truckNum}>{n}</text>
-      <Icon x={2} y={-34} width={68} height={68} className={s.truckIcon} strokeWidth={2.6} aria-hidden="true" />
+      <rect x={-66} y={-40} width={132} height={80} rx={10} className={broken ? s.truckDown : s.truck} />
+      <text x={-30} y={20} textAnchor="middle" className={s.truckNum}>{n}</text>
+      <Icon x={0} y={-26} width={52} height={52} className={s.truckIcon} strokeWidth={2.75} aria-hidden="true" />
+    </g>
+  );
+}
+
+function Building({ x, y, label }: { x: number; y: number; label: string }) {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <rect x={-140} y={-50} width={280} height={100} rx={12} className={s.building} />
+      <text x={0} y={14} textAnchor="middle" className={s.buildingLabel}>{label}</text>
     </g>
   );
 }
@@ -137,35 +153,27 @@ export function VillageMap({ village, houses, trucks, minute, frac, world, blizz
 }) {
   const { plant, garage } = village;
   return (
-    <svg className={s.map} viewBox={`-10 40 ${village.width + 20} ${village.height - 20}`} role="img" aria-label={ariaLabel} preserveAspectRatio="xMidYMid meet">
-      <rect x={-20} y={-20} width={village.width + 40} height={village.height + 40} className={s.ground} />
+    <svg className={s.map} viewBox={`-100 60 ${village.width + 150} ${village.height - 80}`} role="img" aria-label={ariaLabel} preserveAspectRatio="xMidYMid meet">
+      <rect x={-200} y={-20} width={village.width + 400} height={village.height + 40} className={s.ground} />
       <Roads village={village} />
-      {/* water plant and garage sit west of the houses, each an icon plus a word */}
-      <g transform={`translate(${plant.x + 100},${plant.y - 150})`}>
-        <rect x={-120} y={-90} width={240} height={180} rx={10} className={s.plant} />
-        <Droplets x={-40} y={-82} width={80} height={80} className={s.plantIcon} aria-hidden="true" />
-        <text x={0} y={60} textAnchor="middle" className={s.placeText}>{t("sim.plantShort")}</text>
-      </g>
-      <g transform={`translate(${garage.x + 100},${garage.y - 150})`}>
-        <rect x={-120} y={-90} width={240} height={180} rx={10} className={s.garage} />
-        <Wrench x={-36} y={-80} width={72} height={72} className={s.plantIcon} aria-hidden="true" />
-        <text x={0} y={60} textAnchor="middle" className={s.placeText}>{t("sim.garageShort")}</text>
-      </g>
+      {/* water plant and garage sit on their streets at the west edge, set back like the houses */}
+      <Building x={plant.x + 90} y={plant.y - ROAD_HALF - 70} label={t("sim.plant")} />
+      <Building x={garage.x + 90} y={garage.y - ROAD_HALF - 70} label={t("sim.garage")} />
       <Houses village={village} houses={houses} minute={minute} world={world} version={version} />
       {trucks.map((tr) => {
         const x = tr.prev.x + (tr.pos.x - tr.prev.x) * frac;
         const y = tr.prev.y + (tr.pos.y - tr.prev.y) * frac;
         const atGarage = Math.abs(tr.pos.x - garage.x) < 1 && Math.abs(tr.pos.y - garage.y) < 1;
-        // Parked trucks line up beside the garage instead of stacking.
-        const px = atGarage ? garage.x + 100 : x;
-        const py = atGarage ? garage.y + 20 + tr.id * 115 : y;
+        // Parked trucks line up in the garage yard, below its street, instead of stacking.
+        const px = atGarage ? garage.x + 30 : x;
+        const py = atGarage ? garage.y + ROAD_HALF + 60 + tr.id * 92 : y;
         return <TruckGlyph key={tr.id} x={px} y={py} n={tr.id + 1} state={tr.state} />;
       })}
       {blizzard && (
         <g className={s.blizzard}>
-          <rect x={-20} y={-20} width={village.width + 40} height={village.height + 40} className={s.blizzardVeil} />
-          <CloudSnow x={village.width / 2 - 110} y={380} width={220} height={220} className={s.blizzardIcon} aria-hidden="true" />
-          <text x={village.width / 2} y={760} textAnchor="middle" className={s.blizzardText}>{t("sim.blizzard")}</text>
+          <rect x={-200} y={-20} width={village.width + 400} height={village.height + 40} className={s.blizzardVeil} />
+          <CloudSnow x={village.width / 2 - 110} y={420} width={220} height={220} className={s.blizzardIcon} aria-hidden="true" />
+          <text x={village.width / 2} y={780} textAnchor="middle" className={s.blizzardText}>{t("sim.blizzard")}</text>
         </g>
       )}
     </svg>
