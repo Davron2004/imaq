@@ -54,6 +54,16 @@ export interface Village {
   timezone: string;
   config: VillageConfig;
   isSandbox: boolean;
+  /** Optional map geometry (metres, same space as House.x/y). Added by the API builder. */
+  geometry?: VillageGeometry;
+}
+
+export interface VillageGeometry {
+  width: number;
+  height: number;
+  roads: { id: string; name: string; points: [number, number][] }[];
+  plant: { x: number; y: number };
+  garage: { x: number; y: number };
 }
 
 export interface House {
@@ -172,6 +182,8 @@ export interface Flag {
   subject: string;
   /** The confirmed log entries that raised this flag: the flag's explanation. */
   entryIds: string[];
+  /** Couldn't-deliver stops that also raised this flag (repair: frozen_pipe; snow: road_blocked today). Added by the API builder. */
+  stopIds?: string[];
   raisedAt: number;
 }
 
