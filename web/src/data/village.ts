@@ -13,6 +13,15 @@ export function currentVillageId(): string {
   }
 }
 
+/** The village this browser chose, or null if it never chose one. */
+export function storedVillageId(): string | null {
+  try {
+    return localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function setCurrentVillageId(id: string): void {
   try {
     localStorage.setItem(KEY, id);

@@ -1,7 +1,7 @@
 /** Data + actions for the demo hub. No UI logic here — the View only renders. */
 import { useCallback, useEffect, useState } from "react";
-import { api, postJson } from "./api";
-import { currentVillageId, setCurrentVillageId, PRESENTER_VILLAGE_ID } from "./village";
+import { api, ApiError, postJson } from "./api";
+import { currentVillageId, setCurrentVillageId, storedVillageId, PRESENTER_VILLAGE_ID } from "./village";
 import { getRememberedResidentToken } from "./resident";
 
 export type VillageState = "creating" | "ready" | "resetting" | "failed";
@@ -14,33 +14,34 @@ export function useHub() {
   const [state, setState] = useState<VillageState>("creating");
 
   useEffect(() => {
-    if (forcePresenter) {
-      setCurrentVillageId(PRESENTER_VILLAGE_ID);
-      setVillageId(PRESENTER_VILLAGE_ID);
-      setState("ready");
-      return;
-    }
-    const existing = currentVillageId();
-    if (existing && existing !== PRESENTER_VILLAGE_ID) {
-      setVillageId(existing);
-      setState("ready");
-      return;
-    }
     let cancelled = false;
-    setState("creating");
-    postJson<{ villageId: string }>("/demo/villages", {})
-      .then((res) => {
-        if (cancelled) return;
-        setCurrentVillageId(res.villageId);
-        setVillageId(res.villageId);
-        setState("ready");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setCurrentVillageId(PRESENTER_VILLAGE_ID);
-        setVillageId(PRESENTER_VILLAGE_ID);
-        setState("failed");
-      });
+    const use = (id: string, next: VillageState) => {
+      if (cancelled) return;
+      setCurrentVillageId(id);
+      setVillageId(id);
+      setState(next);
+    };
+    (async () => {
+      if (forcePresenter) return use(PRESENTER_VILLAGE_ID, "ready");
+      // Keep whatever village this browser already uses, the presenter village included,
+      // unless the server no longer has it (sandboxes are cleaned up after 3 days).
+      const stored = storedVillageId();
+      if (stored) {
+        try {
+          await api(`/v/${stored}/snapshot`);
+          return use(stored, "ready");
+        } catch (err) {
+          if (!(err instanceof ApiError && err.status === 404)) return use(stored, "ready");
+        }
+      }
+      setState("creating");
+      try {
+        const res = await postJson<{ villageId: string }>("/demo/villages", {});
+        use(res.villageId, "ready");
+      } catch {
+        use(PRESENTER_VILLAGE_ID, "failed");
+      }
+    })();
     return () => {
       cancelled = true;
     };
