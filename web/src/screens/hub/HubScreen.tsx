@@ -1,10 +1,7 @@
-import { t } from "../../i18n";
+import { useHub } from "../../data/hub";
+import HubView from "./HubView";
 
 export default function HubScreen() {
-  return (
-    <main className="placeholder">
-      <h1>{t("app.name")} · Hub</h1>
-      <p>{t("app.comingSoon")}</p>
-    </main>
-  );
+  const { villageId, state, reset, qrHouses, myHouseToken } = useHub();
+  return <HubView villageId={villageId} state={state} onReset={reset} qrHouses={qrHouses} myHouseToken={myHouseToken} />;
 }
