@@ -27,7 +27,7 @@ const syncStatus = (page: Page) => page.getByTestId("sync-status");
 
 async function startShift(page: Page, villageId: string) {
   await page.goto(`/v/${villageId}/driver`);
-  await expect(page.getByRole("heading", { name: "Which truck are you driving?" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Choose your truck" })).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: /Truck 1/ }).first().click();
   await page.getByRole("button", { name: "All OK" }).click();
   await expect(page.getByTestId("summary")).toBeVisible();
@@ -55,9 +55,9 @@ test("every driver action works offline and syncs exactly once", async ({ page, 
 
   // If an earlier run left Truck 1 down, bring it back while online so "down" below is a fresh event.
   if (truck.status === "down") {
-    await page.getByRole("link", { name: "Truck status" }).click();
+    await page.getByRole("link", { name: "Truck status", exact: true }).click();
     await page.getByRole("button", { name: /is back/ }).click();
-    await page.getByRole("link", { name: "Back" }).click();
+    await page.getByRole("link", { name: /Today.s list/ }).first().click();
   }
 
   await context.setOffline(true);
@@ -78,19 +78,19 @@ test("every driver action works offline and syncs exactly once", async ({ page, 
   await expect(page.getByTestId("stop-list").getByText(/Tried .* Road blocked/).first()).toBeVisible();
 
   // Lit door with the number pad.
-  await page.getByRole("link", { name: "Lit door" }).click();
+  await page.getByRole("link", { name: "Lit door", exact: true }).click();
   for (const d of litHouse.label.match(/\d+/)![0]) await page.getByRole("button", { name: d, exact: true }).click();
   await page.getByRole("button", { name: `Add ${litHouse.label}` }).click();
   await expect(page.getByTestId("stop-list").getByText(litHouse.label, { exact: true })).toBeVisible();
 
   // Truck down.
-  await page.getByRole("link", { name: "Truck status" }).click();
+  await page.getByRole("link", { name: "Truck status", exact: true }).click();
   await page.getByRole("button", { name: "Heater" }).click();
   await page.getByRole("button", { name: "Mark Truck 1 down" }).click();
   await expect(page.getByText("Truck 1 is down since")).toBeVisible();
 
   // A sample voice note (no microphone needed).
-  await page.getByRole("link", { name: "Voice note" }).click();
+  await page.getByRole("link", { name: "Voice note", exact: true }).click();
   await page.getByRole("button", { name: "Sample: heater on Truck 2" }).click();
   await expect(page.getByTestId("note-state").first()).toHaveText("Saved on phone");
 
