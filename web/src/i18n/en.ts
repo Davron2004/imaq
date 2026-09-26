@@ -667,4 +667,10 @@ export const en = {
   "sim.summary.morePct": "{pct}% more",
   "sim.summary.samePct": "About the same",
   "sim.summary.blizzardNote": "Deliveries stop in both worlds during the blizzard, so the second row leaves the blizzard out. The total stays above it.",
+  "sim.present": "Present",
+  "sim.exitPresent": "Exit presentation",
+  "sim.today.short": "Spot the door lights. Return to fill. Then deliver.",
+  "sim.imaq.short": "Requests known before leaving. Lit doors en route.",
+  "sim.imaq.descOne": "Know requests before leaving. Pick up lit doors en route.",
+  "sim.counter.outsideBlizzardLabel": "Outside the blizzard:",
 } as const;

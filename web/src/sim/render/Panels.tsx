@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { ArrowUpRight, CheckCircle2, Mic, Pause, Play, RotateCcw, TriangleAlert, X } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Mic, Minimize2, Pause, Play, Presentation, RotateCcw, TriangleAlert, X } from "lucide-react";
 import { Button } from "../../ui";
 import { formatAge, t } from "../../i18n";
 import { DEFAULT_PARAMS, PARAM_SOURCES, MIN_PER_DAY, type Metrics, type ParamSource, type SimEvent, type SimState, type TruckStateObj, type WorldState } from "../engine";
@@ -34,7 +34,9 @@ export function Counters({ metrics }: { metrics: Metrics }) {
           <dt className={s.counterLabel}>{t(c.label)}</dt>
           <dd className={s.counterValue}>{c.fmt(metrics)}</dd>
           {c.key === "householdHoursDry" && (
-            <dd className={s.counterSub}>{t("sim.counter.hhOutsideBlizzard", { n: fmtInt(metrics.householdHoursDryOutsideBlizzard) })}</dd>
+            <dd className={s.counterSub}>
+              {t("sim.counter.outsideBlizzardLabel")} <strong className={s.counterSubValue}>{fmtInt(metrics.householdHoursDryOutsideBlizzard)}</strong>
+            </dd>
           )}
         </div>
       ))}
@@ -226,13 +228,15 @@ export function Timeline({ state, onSeek }: { state: SimState; onSeek: (minute: 
 
 // ---------- controls ----------
 
-export function Controls({ playing, done, onToggle, onRestart, speed, onSpeed }: {
+export function Controls({ playing, done, onToggle, onRestart, speed, onSpeed, presenting, onPresent }: {
   playing: boolean;
   done: boolean;
   onToggle: () => void;
   onRestart: () => void;
   speed: SpeedId;
   onSpeed: (s: SpeedId) => void;
+  presenting: boolean;
+  onPresent: (on: boolean) => void;
 }) {
   return (
     <div className={s.controls}>
@@ -252,6 +256,16 @@ export function Controls({ playing, done, onToggle, onRestart, speed, onSpeed }:
           ))}
         </select>
       </label>
+      {/* One element for both labels, so focus stays put when the layout switches. */}
+      <Button
+        variant="secondary"
+        className={presenting ? undefined : s.presentBtn}
+        onClick={() => onPresent(!presenting)}
+        icon={presenting ? <Minimize2 /> : <Presentation />}
+        aria-keyshortcuts={presenting ? "Escape" : undefined}
+      >
+        {presenting ? t("sim.exitPresent") : t("sim.present")}
+      </Button>
     </div>
   );
 }
@@ -366,7 +380,7 @@ const pctChange = (T: number, I: number) => {
   return Math.abs(pct) < 3 ? t("sim.summary.samePct") : pct > 0 ? t("sim.summary.fewerPct", { pct }) : t("sim.summary.morePct", { pct: -pct });
 };
 
-export function Summary({ today, imaq, onReplay, onAssumptions }: { today: WorldState; imaq: WorldState; onReplay: () => void; onAssumptions: () => void }) {
+export function Summary({ today, imaq, onReplay, onAssumptions, scrollOnShow = true }: { today: WorldState; imaq: WorldState; onReplay: () => void; onAssumptions: () => void; scrollOnShow?: boolean }) {
   const T = today.metrics.householdHoursDry;
   const I = imaq.metrics.householdHoursDry;
   const TO = today.metrics.householdHoursDryOutsideBlizzard;
@@ -376,6 +390,7 @@ export function Summary({ today, imaq, onReplay, onAssumptions }: { today: World
   // When the week ends, bring the summary on screen (the panes may be scrolled on a projector).
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
+    if (!scrollOnShow) return; // presenting: the summary already fits the screen
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     ref.current?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
   }, []);
