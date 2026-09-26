@@ -21,7 +21,12 @@
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
   gap: var(--s-4);
 }
-.wide {
+.wide,
+.open,
+.map,
+.feed,
+.lookup,
+.weekly {
   grid-column: 1 / -1;
 }
 .truckRow {
@@ -125,4 +130,19 @@
   border-radius: var(--radius);
   padding: var(--s-3);
   margin-bottom: var(--s-3);
+}
+
+/* Dense 12-column layout (from the UI reference's office-layout): the
+   operational column (open requests, map) takes two thirds, the attention
+   column (flags, needs-a-human, feed) the right third. Dense flow lets the
+   right-column cards fill in beside the wide ones. */
+@media (min-width: 72rem) {
+  .grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-flow: row dense;
+    align-items: start;
+  }
+  .trucks, .glance, .flags, .human, .feed { grid-column: span 4; }
+  .open, .map { grid-column: span 8; }
+  .lookup, .weekly { grid-column: span 6; }
 }

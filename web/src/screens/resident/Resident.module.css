@@ -16,13 +16,14 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--s-3);
-  margin-bottom: var(--s-5);
+  margin-bottom: var(--s-4);
 }
 .tile {
   justify-content: flex-start;
   gap: var(--s-3);
-  min-height: 5rem;
+  min-height: 6rem;
   text-align: left;
+  border-radius: var(--radius-lg);
 }
 /* Whole words only: "Emergency" must never break mid-word. */
 .tile span {

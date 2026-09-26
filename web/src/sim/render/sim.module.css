@@ -259,7 +259,7 @@
 
 .paneBody {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 13rem;
+  grid-template-columns: minmax(0, 1fr) 11rem;
   gap: var(--s-2);
   min-height: 0;
 }

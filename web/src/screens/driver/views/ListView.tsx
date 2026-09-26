@@ -36,7 +36,7 @@ export function ListView({ vm, onOpenStop }: { vm: ListVm; onOpenStop: (requestI
         <ol className={s.list} data-testid="stop-list">
           {vm.rows.map((r) => (
             <li key={r.id}>
-              <button type="button" className={s.reqBtn} onClick={() => onOpenStop(r.id)} aria-haspopup="dialog" data-request-id={r.id}>
+              <button type="button" className={`${s.reqBtn} ${r.kind === "emergency" ? s.reqUrgent : ""}`} onClick={() => onOpenStop(r.id)} aria-haspopup="dialog" data-request-id={r.id}>
                 <span className={s.reqHouse}>{r.houseLabel}</span>
                 <span className={s.reqLitres}>{r.litresText}</span>
                 <span className={s.reqMeta}>

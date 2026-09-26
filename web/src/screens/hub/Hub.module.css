@@ -48,3 +48,23 @@
   font-size: var(--fs-sm);
   color: var(--c-text-muted);
 }
+
+/* From the UI reference: a single row of four role cards on desktop, each with
+   a primary top rule, and the action pinned to the bottom so buttons line up. */
+.page {
+  max-width: 72rem;
+}
+.page h1 {
+  font-size: var(--fs-2xl);
+}
+.roleCard {
+  border-top: 3px solid var(--c-primary);
+}
+.roleCard > :last-child {
+  margin-top: auto;
+}
+@media (min-width: 64rem) {
+  .roles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
