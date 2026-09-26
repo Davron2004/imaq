@@ -18,14 +18,14 @@
   --c-primary: #0b3d5c;
   --c-primary-text: #ffffff;
   --c-focus: #985000;
-  --c-danger: #a3161b;
+  --c-danger: #95141a; /* 7.5:1 on --c-emergency-bg */
   --c-danger-text: #ffffff;
   --c-warn: #7a4a00;
   --c-warn-bg: #fff1d6;
   --c-ok: #1d5e2b;
   --c-ok-bg: #e2f3e5;
   --c-info-bg: #e3eef7;
-  --c-emergency: #a3161b;
+  --c-emergency: #95141a;
   --c-emergency-bg: #fde8e8;
 
   /* type (rem so the phone's text-size setting scales everything) */
