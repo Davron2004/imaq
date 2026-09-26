@@ -8,12 +8,13 @@ body {
   font-size: var(--fs-base);
   line-height: var(--lh);
 }
-h1, h2, h3 { line-height: 1.2; margin: 0 0 var(--s-3); }
-h1 { font-size: var(--fs-xl); }
-h2 { font-size: var(--fs-lg); }
+h1, h2, h3 { line-height: 1.2; margin: 0 0 var(--s-3); text-wrap: balance; overflow-wrap: break-word; }
+h1 { font-size: var(--fs-xl); letter-spacing: var(--ls-display); }
+h2 { font-size: var(--fs-lg); letter-spacing: var(--ls-tight); }
 h3 { font-size: var(--fs-base); }
 p { margin: 0 0 var(--s-3); }
-a { color: var(--c-primary); }
+a { color: var(--c-primary); text-underline-offset: 4px; }
+a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
 button, input, select, textarea { font: inherit; color: inherit; }
 .visually-hidden {

@@ -131,9 +131,11 @@ export default function ResidentView(props: ResidentViewProps) {
             onCancel={() => onCancelRequest(view.sewage!.id, "sewage")}
           />
         ) : (
-          <Button size="hero" block icon={KIND_ICON.sewage} variant="primary" onClick={() => onRequestKind("sewage")}>
-            {requestLabel("sewage")}
-          </Button>
+          <div className={s.grid}>
+            <Button size="hero" block icon={KIND_ICON.sewage} variant="primary" className={s.tile} onClick={() => onRequestKind("sewage")}>
+              {requestLabel("sewage")}
+            </Button>
+          </div>
         )}
         <p>{t("resident.trucks.sewage", { up: view.trucksRunning.sewage.up, total: view.trucksRunning.sewage.total })}</p>
         {view.lastDelivery.sewage != null && (

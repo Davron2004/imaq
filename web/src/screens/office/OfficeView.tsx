@@ -75,7 +75,7 @@ export default function OfficeView(props: OfficeViewProps) {
       </header>
 
       <div className={s.grid}>
-        <Card>
+        <Card className={s.trucks}>
           <h2>{t("office.trucksHeading")}</h2>
           {snapshot.trucks.map((truck) => (
             <div key={truck.id} className={s.truckRow}>
@@ -105,7 +105,7 @@ export default function OfficeView(props: OfficeViewProps) {
           ))}
         </Card>
 
-        <Card>
+        <Card className={s.glance}>
           <h2>{t("office.glanceHeading")}</h2>
           {tooLongCount > 0 && (
             <p className={s.callout} role="status">
@@ -124,7 +124,7 @@ export default function OfficeView(props: OfficeViewProps) {
           </p>
         </Card>
 
-        <Card className={s.wide}>
+        <Card className={s.open}>
           <h2>{t("office.openHeading")}</h2>
           <AddRequestForm houses={snapshot.houses} onAdd={onAddRequest} />
           {snapshot.openRequests.length === 0 ? (
@@ -156,7 +156,7 @@ export default function OfficeView(props: OfficeViewProps) {
           )}
         </Card>
 
-        <Card className={s.wide}>
+        <Card className={s.map}>
           <h2>{t("office.mapHeading")}</h2>
           <VillageMap
             houses={snapshot.houses}
@@ -166,7 +166,7 @@ export default function OfficeView(props: OfficeViewProps) {
           />
         </Card>
 
-        <Card>
+        <Card className={s.flags}>
           <h2>{t("office.flagsHeading")}</h2>
           {snapshot.flags.length === 0 ? (
             <p>{t("office.flags.empty")}</p>
@@ -175,7 +175,7 @@ export default function OfficeView(props: OfficeViewProps) {
           )}
         </Card>
 
-        <Card>
+        <Card className={s.human}>
           <h2>{t("office.humanHeading")}</h2>
           {snapshot.needsHuman.length === 0 ? (
             <p>{t("office.human.empty")}</p>
@@ -186,7 +186,7 @@ export default function OfficeView(props: OfficeViewProps) {
           )}
         </Card>
 
-        <Card className={s.wide}>
+        <Card className={s.feed}>
           <h2>{t("office.feedHeading")}</h2>
           {snapshot.feed.length === 0 ? (
             <p>{t("office.feed.empty")}</p>
@@ -201,12 +201,12 @@ export default function OfficeView(props: OfficeViewProps) {
           )}
         </Card>
 
-        <Card className={s.wide}>
+        <Card className={s.lookup}>
           <h2>{t("office.lookupHeading")}</h2>
           <LookupPanel lookup={lookup} />
         </Card>
 
-        <Card className={s.wide}>
+        <Card className={s.weekly}>
           <h2>{t("office.weeklyHeading")}</h2>
           <table className={s.table}>
             <thead>
