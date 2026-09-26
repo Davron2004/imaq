@@ -40,16 +40,19 @@ export function CheckView({ vm, recorder, onAllOk, onToggle, onSave, onConfirmDo
   }
   return (
     <div className={s.stack}>
-      <h1 className={s.h1}>{t("driver.check.title", { truck: vm.truckLabel })}</h1>
+      <div className={s.heading}>
+        <span className="eyebrow">{vm.truckLabel}</span>
+        <h1 className={s.h1}>{t("driver.check.heading")}</h1>
+      </div>
       <Button size="hero" block icon={<CheckCheck />} onClick={onAllOk} disabled={vm.anyProblem}>{t("driver.check.allOk")}</Button>
       <p>{t("driver.check.orMark")}</p>
-      <ul className={s.list}>
+      <ul className={s.checkList}>
         {vm.items.map(({ item, ok }) => (
           <li key={item} className={s.checkItem}>
             <span className={s.checkName}>{t(`driver.check.item.${item}`)}</span>
             <span className={s.chips} role="group" aria-label={t(`driver.check.item.${item}`)}>
-              <Button variant={ok ? "primary" : "secondary"} aria-pressed={ok} icon={<Check />} onClick={() => onToggle(item, true)}>{t("driver.check.ok")}</Button>
-              <Button variant={!ok ? "danger" : "secondary"} aria-pressed={!ok} icon={<X />} onClick={() => onToggle(item, false)}>{t("driver.check.problem")}</Button>
+              <Button variant="secondary" className={ok ? s.pickedOk : ""} aria-pressed={ok} icon={<Check />} onClick={() => onToggle(item, true)}>{t("driver.check.ok")}</Button>
+              <Button variant="secondary" className={!ok ? s.pickedProblem : ""} aria-pressed={!ok} icon={<X />} onClick={() => onToggle(item, false)}>{t("driver.check.problem")}</Button>
             </span>
           </li>
         ))}

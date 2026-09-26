@@ -1,5 +1,6 @@
-import { Droplet, Droplets, AlertTriangle, Waves, X } from "lucide-react";
-import { Button, Card, StatusBadge } from "../../ui";
+import { Droplet, Droplets, AlertTriangle, Waves, X, Check, Truck, Lightbulb } from "lucide-react";
+import { Button, StatusBadge } from "../../ui";
+import { PhoneHeader } from "../shared/SiteHeader";
 import { t, formatTime, formatDay } from "../../i18n";
 import s from "./Resident.module.css";
 import type { ResidentView as ResidentViewModel, RequestKind } from "../../../../shared/types";
@@ -14,6 +15,9 @@ const KIND_ICON: Record<RequestKind, React.ReactNode> = {
   emergency: <AlertTriangle />,
   sewage: <Waves />,
 };
+
+/** Reference order: water soon, out, emergency, sewage. */
+const KINDS: RequestKind[] = ["soon", "out", "emergency", "sewage"];
 
 function aheadPhrase(aheadCount: number): string {
   if (aheadCount <= 0) return t("resident.ahead.front");
@@ -42,7 +46,8 @@ export default function ResidentView(props: ResidentViewProps) {
   if (status === "loading") {
     return (
       <main className={s.page} aria-busy="true">
-        <p>{t("resident.loading")}</p>
+        <PhoneHeader role={t("header.resident")} />
+        <p className="muted">{t("resident.loading")}</p>
       </main>
     );
   }
@@ -50,8 +55,12 @@ export default function ResidentView(props: ResidentViewProps) {
   if (status === "unknown") {
     return (
       <main className={s.page}>
-        <h1>{t("resident.unknown.title")}</h1>
-        <p>{t("resident.unknown.body")}</p>
+        <PhoneHeader role={t("header.resident")} />
+        <div className={s.heading}>
+          <h1>{t("resident.unknown.title")}</h1>
+          <p className="muted">{t("resident.unknown.body")}</p>
+        </div>
+        <KeepLight />
       </main>
     );
   }
@@ -59,120 +68,154 @@ export default function ResidentView(props: ResidentViewProps) {
   if (status === "error" || !view) {
     return (
       <main className={s.page}>
-        <h1>{t("resident.error.title")}</h1>
-        <Button onClick={onRetry}>{t("resident.error.retry")}</Button>
+        <PhoneHeader role={t("header.resident")} />
+        <div className={s.heading}>
+          <h1>{t("resident.error.title")}</h1>
+        </div>
+        <Button size="driver" block onClick={onRetry}>
+          {t("resident.error.retry")}
+        </Button>
+        <KeepLight />
       </main>
     );
   }
 
   const requestLabel = (k: RequestKind) => t(`common.request.${k}`);
+  const trackOf = (k: RequestKind): ResidentTrack => (k === "sewage" ? "sewage" : "water");
+  const anyOpen = !!(view.water || view.sewage);
+  const closed = view.lastClosed && view.serverTime - view.lastClosed.at < RECENTLY_CLOSED_MS ? view.lastClosed : null;
 
   return (
     <main className={s.page}>
-      <header className={s.header}>
+      <PhoneHeader role={t("header.resident")} />
+
+      <div className={s.heading}>
+        <span className="eyebrow">{view.village.name}</span>
         <h1>{view.house.label}</h1>
-        <p className={s.village}>{view.village.name}</p>
-      </header>
+      </div>
 
       <div aria-live="polite" className="visually-hidden">
         {sendingTrack ? t("resident.sending") : ""}
         {sendError ? t("resident.sendFailed.title") : ""}
       </div>
 
-      {view.lastClosed && view.serverTime - view.lastClosed.at < RECENTLY_CLOSED_MS && (
-        <Card className={s.openCard} role="status">
-          {view.lastClosed.status === "served"
-            ? t("resident.lastClosed.served", { time: formatTime(view.lastClosed.at) })
-            : t("resident.lastClosed.cancelled", { time: formatTime(view.lastClosed.at) })}
-        </Card>
+      {closed && !anyOpen && (
+        <p className={s.closedLine} role="status">
+          <span aria-hidden="true">{closed.status === "served" ? <Check /> : <X />}</span>
+          <span>
+            {closed.status === "served"
+              ? t("resident.lastClosed.served", { time: formatTime(closed.at) })
+              : t("resident.lastClosed.cancelled", { time: formatTime(closed.at) })}
+          </span>
+        </p>
       )}
 
-      <section className={s.section} aria-labelledby="water-heading">
-        <h2 id="water-heading">{t("resident.waterHeading")}</h2>
-        {view.water ? (
-          <OpenRequestCard
-            req={view.water}
-            track="water"
-            sending={sendingTrack === "water"}
-            error={sendError === "water"}
-            onCancel={() => onCancelRequest(view.water!.id, "water")}
-          />
-        ) : (
-          <div className={s.grid}>
-            {(["soon", "out", "emergency"] as RequestKind[]).map((k) => (
-              <Button
-                key={k}
-                size="hero"
-                block
-                className={`${s.tile} ${k === "emergency" ? s.emergency : ""}`}
-                icon={KIND_ICON[k]}
-                variant={k === "emergency" ? "danger" : "primary"}
-                onClick={() => onRequestKind(k)}
-              >
-                {requestLabel(k)}
-              </Button>
-            ))}
-          </div>
-        )}
-        <p>{t("resident.trucks.water", { up: view.trucksRunning.water.up, total: view.trucksRunning.water.total })}</p>
-        {view.lastDelivery.water != null && (
-          <p>{t("resident.lastDelivery.water", { when: `${formatDay(view.lastDelivery.water)} ${formatTime(view.lastDelivery.water)}` })}</p>
-        )}
-      </section>
-
-      <section className={s.section} aria-labelledby="sewage-heading">
-        <h2 id="sewage-heading">{t("resident.sewageHeading")}</h2>
-        {view.sewage ? (
-          <OpenRequestCard
-            req={view.sewage}
-            track="sewage"
-            sending={sendingTrack === "sewage"}
-            error={sendError === "sewage"}
-            onCancel={() => onCancelRequest(view.sewage!.id, "sewage")}
-          />
-        ) : (
-          <div className={s.grid}>
-            <Button size="hero" block icon={KIND_ICON.sewage} variant="primary" className={s.tile} onClick={() => onRequestKind("sewage")}>
-              {requestLabel("sewage")}
-            </Button>
-          </div>
-        )}
-        <p>{t("resident.trucks.sewage", { up: view.trucksRunning.sewage.up, total: view.trucksRunning.sewage.total })}</p>
-        {view.lastDelivery.sewage != null && (
-          <p>{t("resident.lastDelivery.sewage", { when: `${formatDay(view.lastDelivery.sewage)} ${formatTime(view.lastDelivery.sewage)}` })}</p>
-        )}
-      </section>
+      {view.water && (
+        <OpenRequestCard
+          req={view.water}
+          sending={sendingTrack === "water"}
+          error={sendError === "water"}
+          onCancel={() => onCancelRequest(view.water!.id, "water")}
+        />
+      )}
+      {view.sewage && (
+        <OpenRequestCard
+          req={view.sewage}
+          sending={sendingTrack === "sewage"}
+          error={sendError === "sewage"}
+          onCancel={() => onCancelRequest(view.sewage!.id, "sewage")}
+        />
+      )}
 
       {(sendError === "water" || sendError === "sewage") && (
-        <Card role="alert" className={s.emergencyBanner}>
-          <p>{t("resident.sendFailed.title")}</p>
+        <div role="alert" className={s.failNotice}>
+          <strong>{t("resident.sendFailed.title")}</strong>
           <p>{t("resident.sendFailed.body")}</p>
-          <Button variant="secondary" onClick={onRetry}>
+          <Button variant="secondary" size="driver" block onClick={onRetry}>
             {t("resident.retry")}
           </Button>
-        </Card>
+        </div>
       )}
 
-      <Card>
-        <h2>{t("resident.emergencyContact.heading")}</h2>
+      <section className={s.stack} aria-labelledby="need-heading">
+        <h2 id="need-heading">{anyOpen ? t("resident.changeHeading") : t("resident.heading")}</h2>
+        {!anyOpen && <p className="muted">{t("resident.requestHint")}</p>}
+        <div className={s.requestButtons}>
+          {KINDS.map((k) => {
+            const open = k === "sewage" ? view.sewage : view.water;
+            const active = open?.kind === k;
+            const busy = sendingTrack === trackOf(k);
+            return (
+              <button
+                key={k}
+                type="button"
+                className={[s.requestAction, k === "emergency" ? s.emergency : "", active ? s.active : ""].join(" ")}
+                disabled={active || busy}
+                aria-describedby={`hint-${k}`}
+                onClick={() => onRequestKind(k)}
+              >
+                <span className={s.requestIcon} aria-hidden="true">
+                  {KIND_ICON[k]}
+                </span>
+                <span className={s.requestText}>
+                  <strong>{requestLabel(k)}</strong>
+                  <small id={`hint-${k}`}>
+                    {active ? (
+                      <span className={s.requested}>
+                        <Check aria-hidden="true" /> {t("resident.alreadyRequested")}
+                      </span>
+                    ) : (
+                      t(`resident.hint.${k}`)
+                    )}
+                  </small>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className={s.phoneStatus}>
+        <div className={s.statusLine}>
+          <Truck aria-hidden="true" />
+          <strong>{t("resident.trucks.water", { up: view.trucksRunning.water.up, total: view.trucksRunning.water.total })}</strong>
+        </div>
+        <p>
+          {view.lastDelivery.water != null
+            ? t("resident.lastDelivery.water", { when: `${formatDay(view.lastDelivery.water)} ${formatTime(view.lastDelivery.water)}` })
+            : t("resident.noDelivery.water")}
+        </p>
+        <div className={s.statusLine}>
+          <Waves aria-hidden="true" />
+          <strong>{t("resident.trucks.sewage", { up: view.trucksRunning.sewage.up, total: view.trucksRunning.sewage.total })}</strong>
+        </div>
+        <p>
+          {view.lastDelivery.sewage != null
+            ? t("resident.lastDelivery.sewage", { when: `${formatDay(view.lastDelivery.sewage)} ${formatTime(view.lastDelivery.sewage)}` })
+            : t("resident.noDelivery.sewage")}
+        </p>
+      </section>
+
+      <KeepLight />
+
+      <details className={s.details}>
+        <summary>{t("resident.contact.summary")}</summary>
         <p>{view.village.emergencyContact}</p>
-      </Card>
+      </details>
 
       {showAddHome && (
-        <Card role="note" style={{ marginTop: "1rem" }}>
-          <p>
-            <strong>{t("resident.addHome.title")}</strong>
-          </p>
+        <div role="note" className={s.panel}>
+          <strong>{t("resident.addHome.title")}</strong>
           <p>{t("resident.addHome.body")}</p>
-          <Button variant="secondary" onClick={onDismissAddHome}>
+          <Button variant="secondary" size="driver" block onClick={onDismissAddHome}>
             {t("resident.addHome.dismiss")}
           </Button>
-        </Card>
+        </div>
       )}
 
       {pending && (
         <div className={s.dialog} role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-          <Card className={s.dialogCard}>
+          <div className={s.dialogCard}>
             <h2 id="confirm-title">
               {pending.mode === "emergency"
                 ? t("resident.emergency.confirmTitle")
@@ -187,40 +230,57 @@ export default function ResidentView(props: ResidentViewProps) {
                 {t("resident.confirm.cancel")}
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </main>
   );
 }
 
+/** The door-light fallback: every resident failure path ends with this. */
+function KeepLight() {
+  return (
+    <div className={s.keepLight}>
+      <div className={s.statusLine}>
+        <Lightbulb aria-hidden="true" />
+        <strong>{t("resident.keepLight.title")}</strong>
+      </div>
+      <p className="muted">{t("resident.keepLight.body")}</p>
+    </div>
+  );
+}
+
 function OpenRequestCard({
   req,
-  track,
   sending,
   error,
   onCancel,
 }: {
   req: NonNullable<ResidentViewModel["water"]>;
-  track: ResidentTrack;
   sending: boolean;
   error: boolean;
   onCancel: () => void;
 }) {
   return (
-    <Card className="resident-open-card" role="status">
-      <StatusBadge tone={req.kind === "emergency" ? "emergency" : "info"} icon={KIND_ICON[req.kind]}>
-        {t(`common.request.${req.kind}`)}
-      </StatusBadge>
-      <p>{t("resident.received", { time: formatTime(req.createdAt), label: t(`common.request.${req.kind}`) })}</p>
-      <p>{aheadPhrase(req.aheadCount)}</p>
+    <section className={s.received} role="status">
+      <div className={s.receivedHead}>
+        <Check aria-hidden="true" />
+        <h2>{t("resident.receivedTitle")}</h2>
+      </div>
+      <span>
+        <StatusBadge tone={req.kind === "emergency" ? "emergency" : "info"} icon={KIND_ICON[req.kind]}>
+          {t(`common.request.${req.kind}`)}
+        </StatusBadge>
+      </span>
+      <p>{t("resident.receivedAt", { time: formatTime(req.createdAt) })}</p>
       {req.lastAttempt && (
         <p>{t("resident.lastAttempt", { time: formatTime(req.lastAttempt.at), reason: t(`common.reason.${req.lastAttempt.reason}`) })}</p>
       )}
-      <Button variant="secondary" onClick={onCancel} disabled={sending}>
+      <strong>{aheadPhrase(req.aheadCount)}</strong>
+      <Button variant="secondary" size="driver" block onClick={onCancel} disabled={sending}>
         {sending ? t("resident.cancelling") : t("resident.cancelRequest")}
       </Button>
       {error && <p role="alert">{t("resident.sendFailed.title")}</p>}
-    </Card>
+    </section>
   );
 }

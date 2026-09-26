@@ -51,7 +51,11 @@ export interface ListVm {
   truckLabel: string;
   truckDown: boolean;
   summaryText: string;
+  /** Just the number, e.g. "3,600" (the big figure on the load summary). */
+  litresNumber: string;
   loadsText: string;
+  /** "2 loads at current capacity". */
+  loadsLongText: string;
   stopsText: string;
   counts: { kind: RequestKind; text: string; count: number }[];
   rows: RowVm[];
@@ -68,7 +72,9 @@ export function listVm(snap: Snapshot, truck: Truck, now: number): ListVm {
     truckLabel: truck.label,
     truckDown: truck.status === "down",
     summaryText: t("driver.list.summary", { litres: nf.format(litres) }),
+    litresNumber: nf.format(litres),
     loadsText: t("driver.list.loads", { count: loads }),
+    loadsLongText: t("driver.list.loadsAt", { count: loads }),
     stopsText: t("driver.list.stops", { count: reqs.length }),
     counts: kinds.map((k) => ({ kind: k, count: reqs.filter((r) => r.kind === k).length, text: t(`common.request.${k}`) })),
     rows: reqs.map((r) => ({

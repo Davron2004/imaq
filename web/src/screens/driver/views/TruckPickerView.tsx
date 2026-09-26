@@ -19,15 +19,17 @@ export function TruckPickerView({ trucks, initials, onPick, onInitials }: {
 }) {
   return (
     <div className={s.stack}>
-      <h1 className={s.h1}>{t("driver.pick.title")}</h1>
+      <div className={s.heading}>
+        <h1 className={s.h1}>{t("driver.pick.heading")}</h1>
+        <p className={s.muted}>{t("driver.pick.help")}</p>
+      </div>
       {trucks.length === 0 && <p>{t("driver.pick.noTrucks")}</p>}
       <ul className={s.list}>
         {trucks.map((tr) => (
           <li key={tr.id}>
             <button type="button" className={`${s.cardBtn} ${tr.selected ? s.cardBtnSelected : ""}`} onClick={() => onPick(tr.id)} aria-current={tr.selected || undefined}>
-              <span className={s.cardTitle}><TruckIcon aria-hidden="true" /> {tr.label}</span>
-              <span>{tr.kindText}</span>
-              <span className={s.kind}>
+              <span className={s.cardTitle}><TruckIcon aria-hidden="true" /> {tr.label} · {tr.kindText}</span>
+              <span className={`${s.tag} ${tr.up ? s.statusOk : s.statusDown}`}>
                 {tr.up ? <CircleCheck aria-hidden="true" /> : <CircleAlert aria-hidden="true" />} {tr.statusText}
               </span>
             </button>
