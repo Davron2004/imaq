@@ -7,9 +7,8 @@
 }
 .phones {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: var(--s-3);
-  width: 24rem;
   flex-shrink: 0;
 }
 .phoneFrame {
@@ -17,7 +16,8 @@
   border-radius: 1.5rem;
   overflow: hidden;
   background: var(--c-bg);
-  flex: 1;
+  /* A real phone's width, full height, so both apps look the way they do on a phone. */
+  width: 24.5rem;
   display: flex;
   flex-direction: column;
 }
