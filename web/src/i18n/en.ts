@@ -521,4 +521,17 @@ export const en = {
   "driver.card.trucks": "Trucks",
   "driver.card.houses": "Houses",
   "driver.nav.today": "Today",
+
+  // header (shared site header)
+  "header.home": "Imaq overview",
+  "header.kicker": "Community water",
+  "header.demo": "Fictional demo village",
+  "header.navLabel": "Imaq",
+  "header.overview": "Overview",
+  "header.resident": "Resident",
+  "header.driver": "Driver",
+  "header.office": "Water office",
+  "header.simulation": "Simulation",
+  "header.stage": "Live demo",
+  "header.opening": "Opening a demo house…",
 } as const;

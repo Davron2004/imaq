@@ -1,12 +1,13 @@
+/* Flat status tint with an icon and a word: never colour alone, no pill outline. */
 .badge {
-  display: inline-flex; align-items: center; gap: var(--s-1);
-  padding: var(--s-1) var(--s-2); border-radius: 999px;
-  border: var(--border-w) solid currentColor;
-  font-size: var(--fs-sm); font-weight: var(--fw-bold); line-height: 1.2;
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-1) var(--s-2); border-radius: var(--radius);
+  font-size: var(--fs-sm); font-weight: var(--fw-semibold); line-height: 1.5;
+  background: var(--c-surface-2); color: var(--c-text);
 }
-.icon { display: inline-flex; }
-.icon svg { width: 1.1em; height: 1.1em; }
-.neutral { color: var(--c-text); background: var(--c-surface); }
+.icon { display: inline-flex; flex: none; }
+.icon svg { width: 1.15em; height: 1.15em; stroke-width: 2; }
+.neutral { color: var(--c-text); background: var(--c-surface-2); }
 .ok { color: var(--c-ok); background: var(--c-ok-bg); }
 .warn { color: var(--c-warn); background: var(--c-warn-bg); }
 .danger { color: var(--c-danger); background: var(--c-emergency-bg); }
