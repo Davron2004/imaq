@@ -1,10 +1,13 @@
-import { t } from "../../i18n";
+import { useState } from "react";
+import { SimErrorBoundary } from "../../sim/render/ErrorBoundary";
+import SimView from "./SimView";
 
+/** `/sim` route. The error boundary remounts the whole view (fresh engine) on Restart. */
 export default function SimScreen() {
+  const [mount, setMount] = useState(0);
   return (
-    <main className="placeholder">
-      <h1>{t("app.name")} · Sim</h1>
-      <p>{t("app.comingSoon")}</p>
-    </main>
+    <SimErrorBoundary onRestart={() => setMount((m) => m + 1)}>
+      <SimView key={mount} />
+    </SimErrorBoundary>
   );
 }

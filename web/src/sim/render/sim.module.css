@@ -1,0 +1,666 @@
+/* Simulation screen. Designed for a projector at 1280×720 first; stacks on phones. */
+
+.root {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font);
+}
+
+@media (min-width: 900px) {
+  .root {
+    height: 100dvh;
+    overflow: hidden;
+  }
+}
+
+.top {
+  justify-content: space-between;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+}
+.title {
+  font-size: var(--fs-lg);
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.simLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--s-3);
+  border: var(--border-w) solid var(--c-warn);
+  background: var(--c-warn-bg);
+  color: var(--c-warn);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-base);
+  cursor: pointer;
+}
+.simLabelLink {
+  text-decoration: underline;
+  font-weight: var(--fw-normal);
+}
+.simLabel:focus-visible,
+.speedBtn:focus-visible,
+.speedOn:focus-visible,
+.marker:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.speeds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.speedBtn,
+.speedOn {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  padding: 0 var(--s-2);
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.speedOn {
+  background: var(--c-primary);
+  color: var(--c-primary-text);
+  border-color: var(--c-primary);
+  font-weight: var(--fw-bold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- clock + timeline ---------- */
+.timelineRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  white-space: nowrap;
+}
+.clockDay {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+.clockTime {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+.timeline {
+  flex: 1;
+  position: relative;
+  padding-bottom: 26px;
+}
+.track {
+  position: relative;
+  height: 14px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: 7px;
+  overflow: visible;
+}
+.progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--c-primary);
+  border-radius: 7px;
+}
+.blizzardBand {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(45deg, transparent 0 4px, var(--c-border) 4px 6px);
+  opacity: 0.6;
+}
+.dayTick {
+  position: absolute;
+  top: 16px;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  transform: translateX(4px);
+}
+.markers {
+  position: absolute;
+  inset: -6px 0 auto 0;
+  height: 26px;
+}
+.marker {
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  border-radius: 50%;
+  border: 2px solid var(--c-text);
+  background: var(--c-bg);
+  padding: 0;
+  cursor: pointer;
+}
+.marker::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: var(--c-text);
+  transform: rotate(45deg);
+}
+.markerText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* ---------- panes ---------- */
+.panes {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+  min-height: 0;
+}
+@media (max-width: 899px) {
+  .panes {
+    grid-template-columns: 1fr;
+  }
+}
+.pane {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--s-2);
+  min-height: 0;
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-2) var(--s-3);
+  background: var(--c-surface);
+}
+.paneHead {
+  min-height: 0;
+}
+.paneTitle {
+  margin: 0;
+  font-size: var(--fs-xl);
+  line-height: 1.1;
+}
+.paneSub {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  line-height: 1.3;
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--s-2);
+  margin: 0;
+}
+.counter {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 4px var(--s-2);
+}
+.counterValue {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: var(--fw-bold);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.counterLabel {
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  color: var(--c-text-muted);
+}
+.counter:first-child .counterValue,
+.counter:nth-child(2) .counterValue {
+  color: var(--c-danger);
+}
+@media (max-width: 600px) {
+  .counters {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+}
+
+.paneBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 13rem;
+  gap: var(--s-2);
+  min-height: 0;
+}
+@media (max-width: 600px) {
+  .paneBody {
+    grid-template-columns: 1fr;
+  }
+}
+.mapWrap {
+  margin: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.map {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  display: block;
+}
+.mapCaption {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------- map marks ---------- */
+.ground {
+  fill: var(--c-bg);
+}
+.road line {
+  stroke: var(--c-surface-2);
+  stroke-width: 44;
+  stroke-linecap: round;
+}
+.body {
+  fill: var(--c-bg);
+  stroke: var(--c-text);
+  stroke-width: 7;
+}
+.roof {
+  fill: var(--c-text-muted);
+}
+.bodyDry {
+  fill: var(--c-text);
+  stroke: var(--c-text);
+  stroke-width: 7;
+}
+.roofDry {
+  fill: var(--c-danger);
+}
+.dryX {
+  stroke: var(--c-bg);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.tank {
+  fill: var(--c-primary);
+}
+.tankOutline {
+  fill: none;
+  stroke: var(--c-text-muted);
+  stroke-width: 3;
+}
+.light circle {
+  fill: #ffc21a;
+  stroke: var(--c-text);
+  stroke-width: 5;
+}
+.rays {
+  stroke: #b77900;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.emerg {
+  fill: var(--c-emergency);
+  stroke: var(--c-bg);
+  stroke-width: 5;
+}
+.emergText {
+  fill: #fff;
+  font-size: 60px;
+  font-weight: 800;
+}
+.deliveredDot {
+  fill: var(--c-ok);
+  stroke: var(--c-bg);
+  stroke-width: 4;
+}
+.check {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.appDot {
+  fill: var(--c-text-muted);
+}
+.truck {
+  fill: var(--c-primary);
+  stroke: var(--c-bg);
+  stroke-width: 6;
+}
+.truckDown {
+  fill: var(--c-surface-2);
+  stroke: var(--c-danger);
+  stroke-width: 10;
+  stroke-dasharray: 24 12;
+}
+.truckNum {
+  fill: var(--c-primary-text);
+  font-size: 80px;
+  font-weight: 800;
+}
+.truckDown + .truckNum {
+  fill: var(--c-text);
+}
+.truckIcon {
+  color: var(--c-primary-text);
+}
+.truckDown ~ .truckIcon {
+  color: var(--c-danger);
+}
+.plant,
+.garage {
+  fill: var(--c-surface-2);
+  stroke: var(--c-text);
+  stroke-width: 6;
+}
+.plantIcon {
+  color: var(--c-text);
+}
+.placeText {
+  fill: var(--c-text);
+  font-size: 54px;
+  font-weight: 700;
+}
+.blizzardVeil {
+  fill: var(--c-bg);
+  opacity: 0.72;
+}
+.blizzardIcon {
+  color: var(--c-text);
+}
+.blizzardText {
+  fill: var(--c-text);
+  font-size: 120px;
+  font-weight: 800;
+}
+
+/* ---------- truck list + ticker ---------- */
+.truckList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-sm);
+  line-height: 1.25;
+}
+.truckLine,
+.truckLineDown {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.truckLine svg,
+.truckLineDown svg {
+  flex: none;
+  margin-top: 1px;
+}
+.truckLineDown {
+  color: var(--c-danger);
+  font-weight: var(--fw-bold);
+}
+
+.ticker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--c-border);
+  padding-top: 4px;
+}
+.tickerTitle {
+  margin: 0;
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted);
+}
+.pin,
+.pinAlert {
+  display: flex;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: var(--radius);
+  background: var(--c-info-bg);
+  border: 2px solid var(--c-primary);
+  font-size: var(--fs-sm);
+  line-height: 1.25;
+}
+.pinAlert {
+  background: var(--c-emergency-bg);
+  border-color: var(--c-danger);
+}
+.pinIcon {
+  flex: none;
+}
+.pin p,
+.pinAlert p {
+  margin: 0;
+}
+.quote {
+  font-style: italic;
+}
+.pinLine {
+  font-weight: var(--fw-bold);
+}
+.routine {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--c-text);
+}
+.routineTime {
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-muted);
+}
+
+/* ---------- legend ---------- */
+.legend ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--s-4);
+  font-size: 0.8125rem;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.legendSvg {
+  width: 26px;
+  height: 30px;
+  flex: none;
+}
+
+/* ---------- overlays ---------- */
+.startOverlay,
+.summaryOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  background: color-mix(in srgb, var(--c-bg) 55%, transparent);
+  font-size: var(--fs-lg);
+  text-align: center;
+  z-index: 2;
+}
+.startOverlay p {
+  background: var(--c-bg);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  margin: 0;
+}
+.summaryOverlay {
+  background: color-mix(in srgb, var(--c-bg) 80%, transparent);
+  overflow: auto;
+}
+.summary {
+  margin: auto;
+  background: var(--c-bg);
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 44rem;
+}
+.summary p {
+  margin: 0;
+}
+.summaryTitle {
+  margin: 0;
+  font-size: var(--fs-2xl);
+}
+.summaryLead {
+  font-size: var(--fs-lg);
+}
+.summaryLine {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+}
+.table {
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+  text-align: left;
+}
+.table th,
+.table td {
+  border-bottom: 1px solid var(--c-border);
+  padding: 4px var(--s-3);
+  vertical-align: top;
+}
+.table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.dialog {
+  max-width: min(56rem, 96vw);
+  max-height: 92dvh;
+  border: var(--border-w) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-bg);
+  color: var(--c-text);
+  padding: var(--s-4);
+}
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+.dialogHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+}
+.dialogHead h2 {
+  margin: 0;
+}
+.simTag {
+  display: inline-block;
+  font-weight: var(--fw-bold);
+  color: var(--c-warn);
+  background: var(--c-warn-bg);
+  border: 2px solid var(--c-warn);
+  border-radius: var(--radius);
+  padding: 2px var(--s-2);
+}
+.strong {
+  font-weight: var(--fw-bold);
+}
+
+.error {
+  padding: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The wait counter carries a unit ("14 min", "2 days"): keep it on one line so rows stay aligned. */
+.counterValue {
+  white-space: nowrap;
+}
+.counter:last-child .counterValue {
+  font-size: 1.75rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 600px) {
+  .timelineRow {
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  .timeline {
+    flex-basis: 100%;
+  }
+  .startOverlay {
+    justify-content: flex-start;
+    padding-top: 12rem;
+  }
+}
