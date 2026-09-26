@@ -109,6 +109,12 @@ export interface Metrics {
   dryNow: number;
   /** Sum over houses of minutes spent dry, / 60. */
   householdHoursDry: number;
+  /**
+   * Like householdHoursDry, but only counting minutes when no blizzard is in effect.
+   * The blizzard stops deliveries in both worlds equally; this shows the difference
+   * outside it. Always shown next to the total, never instead of it.
+   */
+  householdHoursDryOutsideBlizzard: number;
   km: number;
   deliveries: number;
   /** Longest current wait in minutes, measured from light-on (both worlds), 0 if none. */
