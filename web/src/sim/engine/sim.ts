@@ -35,6 +35,8 @@ interface TruckInternal {
 interface WorldInternal {
   ti: TruckInternal[];
   dryMinutes: number;
+  /** Dry house-minutes accumulated only on steps where `state.blizzard` is false. */
+  dryMinutesOutsideBlizzard: number;
 }
 
 export interface Sim {
@@ -157,7 +159,7 @@ export function createSim(params: Partial<SimParams> = {}, seed = params.seed ??
         kmDriven: 0,
       }),
     ),
-    metrics: { dryNow: 0, householdHoursDry: 0, km: 0, deliveries: 0, oldestWaitMin: 0, maxWaitMin: 0 },
+    metrics: { dryNow: 0, householdHoursDry: 0, householdHoursDryOutsideBlizzard: 0, km: 0, deliveries: 0, oldestWaitMin: 0, maxWaitMin: 0 },
     daily: [],
   });
 
@@ -173,8 +175,8 @@ export function createSim(params: Partial<SimParams> = {}, seed = params.seed ??
     done: false,
   };
   const internal: Record<WorldId, WorldInternal> = {
-    today: { ti: [], dryMinutes: 0 },
-    imaq: { ti: [], dryMinutes: 0 },
+    today: { ti: [], dryMinutes: 0, dryMinutesOutsideBlizzard: 0 },
+    imaq: { ti: [], dryMinutes: 0, dryMinutesOutsideBlizzard: 0 },
   };
   for (const w of ["today", "imaq"] as const) {
     internal[w].ti = state.worlds[w].trucks.map(() => ({
@@ -609,8 +611,10 @@ export function createSim(params: Partial<SimParams> = {}, seed = params.seed ??
       if (h.lightOn) oldest = Math.max(oldest, m - h.lightOnAt);
     }
     internal[wid].dryMinutes += dry;
+    if (!state.blizzard) internal[wid].dryMinutesOutsideBlizzard += dry;
     w.metrics.dryNow = dry;
     w.metrics.householdHoursDry = internal[wid].dryMinutes / 60;
+    w.metrics.householdHoursDryOutsideBlizzard = internal[wid].dryMinutesOutsideBlizzard / 60;
     w.metrics.km = w.trucks.reduce((s, t) => s + t.kmDriven, 0);
     w.metrics.oldestWaitMin = oldest;
     w.metrics.maxWaitMin = Math.max(w.metrics.maxWaitMin, oldest);
