@@ -16,13 +16,31 @@
 }
 
 /* ---------- page heading ---------- */
-.heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--s-5);
-  flex-wrap: wrap;
+/* Heading, controls, clock and timeline share one grid so presenting mode can re-flow the same
+   elements (focus never jumps) into a single compact row. */
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "text controls"
+    "clock clock"
+    "timeline timeline";
+  align-items: end;
+  column-gap: var(--s-5);
+}
+.top > .headingText {
+  grid-area: text;
   margin-bottom: var(--s-5);
+}
+.top > .controls {
+  grid-area: controls;
+  margin-bottom: var(--s-5);
+}
+.top > .clockRow {
+  grid-area: clock;
+}
+.top > .timeline {
+  grid-area: timeline;
 }
 .headingText {
   min-width: 0;
@@ -184,30 +202,41 @@
 }
 
 /* ---------- panes ---------- */
+/* Rows shared across both panes (subgrid): header, map, counters, truck chips. Headers size to
+   their text; if one wraps, the maps still start on the same line. */
 .panes {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-5);
+  grid-template-rows: auto auto auto auto;
+  column-gap: var(--s-5);
+  row-gap: 0;
 }
 .col {
+  grid-row: span 4;
   display: grid;
-  gap: var(--s-3);
-  align-content: start;
+  grid-template-rows: subgrid;
+  row-gap: 0;
   min-width: 0;
 }
 .pane {
+  grid-row: span 3;
+  display: grid;
+  grid-template-rows: subgrid;
+  row-gap: 0;
   border: var(--border-w) solid var(--c-soft-line);
   border-radius: var(--radius-lg);
   overflow: clip;
   min-width: 0;
+}
+.col > .truckList {
+  margin-top: var(--s-3);
 }
 .paneHead {
   padding: var(--s-4) var(--s-5);
   display: grid;
   gap: var(--s-2);
   align-content: start;
-  min-height: 8.5rem;
 }
 .paneEyebrow {
   margin: 0;
@@ -220,7 +249,6 @@
   font-weight: var(--fw-bold);
   letter-spacing: var(--ls-tight);
   line-height: 1.3;
-  max-width: 40ch;
 }
 
 .mapWrap {
@@ -416,6 +444,18 @@
   font-weight: var(--fw-semibold);
   color: var(--c-text);
 }
+.counterSubValue {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Presenting is for projectors; on narrow screens the normal layout already stacks. */
+@media (max-width: 1023px) {
+  .presentBtn {
+    display: none !important;
+  }
+}
 
 /* ---------- trucks in words ---------- */
 .truckList {
@@ -593,6 +633,9 @@
 .summary .table td {
   vertical-align: baseline;
 }
+.summary .table td {
+  white-space: nowrap;
+}
 .summary .table tbody th {
   font-weight: var(--fw-semibold);
   font-size: var(--fs-base);
@@ -678,11 +721,23 @@
   .root {
     padding: var(--s-5) var(--s-4);
   }
-  .heading {
-    align-items: flex-start;
+  .top {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "text"
+      "controls"
+      "clock"
+      "timeline";
   }
   .panes {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+    row-gap: var(--s-5);
+  }
+  .col,
+  .pane {
+    grid-row: auto;
+    grid-template-rows: none;
   }
   .counters {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -719,4 +774,272 @@
   .dayLabel {
     font-size: 0.6875rem;
   }
+}
+
+/* ---------- presenting (projector, >= 1024 px): everything in one screen, no scrolling ---------- */
+.presenting {
+  height: 100dvh;
+  max-width: none;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  overflow: auto;
+}
+.presenting .top {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "text clock controls"
+    "timeline timeline timeline";
+  align-items: center;
+  row-gap: var(--s-1);
+}
+.presenting .top > .headingText,
+.presenting .top > .controls {
+  margin-bottom: 0;
+}
+.presenting .title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  margin: 0;
+}
+.presenting .subtitle {
+  display: none;
+}
+.presenting .simLabel {
+  min-height: 32px;
+  font-size: var(--fs-sm);
+}
+.presenting .clockRow {
+  border-top: 0;
+  padding: 0;
+  justify-content: flex-start;
+  gap: var(--s-3);
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.presenting .clock {
+  white-space: nowrap;
+}
+.presenting .tag,
+.presenting .tagWarn {
+  white-space: nowrap;
+}
+.presenting .controls {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.presenting .speedField > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.presenting .speedField select {
+  min-width: 0;
+}
+.presenting .timeline {
+  margin-bottom: 0;
+}
+.presenting .day,
+.presenting .dayOn {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--s-2);
+  align-items: baseline;
+}
+.presenting .dayBar {
+  grid-column: 1 / -1;
+}
+.presenting .dayLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+.presenting .panes {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  min-height: 0;
+}
+.presenting .paneHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  min-width: 0;
+}
+.presenting .paneEyebrow {
+  flex: none;
+}
+.presenting .paneDesc {
+  font-size: var(--fs-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.presenting .mapWrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.presenting .map {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+.presenting .mapCaption {
+  padding: 0 var(--s-3) 2px;
+}
+
+/* Counter strip: dry-now biggest, household-hours (+ outside the blizzard) next, the rest small. */
+.presenting .counters {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: repeat(3, auto);
+  gap: 0 var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  align-items: center;
+}
+.presenting .counterLead {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 0;
+  border-bottom: 0;
+  padding: 0 var(--s-4) 0 0;
+  border-right: var(--border-w) solid var(--c-soft-line);
+  align-self: stretch;
+  justify-content: center;
+}
+.presenting .counterLeadValue {
+  font-size: 4.25rem;
+}
+.presenting .counterLeadLabel {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  max-width: 9rem;
+  line-height: 1.25;
+}
+.presenting .counter:has(.counterSub) {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  gap: 0;
+}
+.presenting .counter:has(.counterSub) .counterValue {
+  font-size: 2.5rem;
+}
+.presenting .counter:has(.counterSub) .counterLabel {
+  line-height: 1.25;
+}
+/* Label over value, so the strip keeps one height whatever the digit count and never collides
+   with the small column. */
+.presenting .counterSub {
+  margin-top: var(--s-1);
+  font-size: var(--fs-sm);
+  display: grid;
+  line-height: 1.15;
+}
+.presenting .counterSubValue {
+  font-size: 1.875rem;
+  letter-spacing: var(--ls-tight);
+}
+.presenting .counter:not(:has(.counterSub)) {
+  grid-column: 3;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+.presenting .counter:not(:has(.counterSub)) .counterValue {
+  font-size: var(--fs-lg);
+  letter-spacing: var(--ls-tight);
+}
+.presenting .counter:not(:has(.counterSub)) .counterLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.presenting .col > .truckList {
+  margin-top: var(--s-1);
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.presenting .truckChip,
+.presenting .truckChipDown {
+  font-size: var(--fs-xs);
+  padding: 2px var(--s-2);
+  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.presenting .truckChip > svg,
+.presenting .truckChipDown > svg {
+  flex: none;
+}
+.presenting .truckChip > span,
+.presenting .truckChipDown > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ticker: one line. The newest pinned moment wins, otherwise the newest routine line. */
+.presenting .ticker {
+  margin-top: 0;
+  min-height: 0;
+  padding: var(--s-1) var(--s-4);
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.presenting .tickerBody > :nth-child(n + 2),
+.presenting .routine li:nth-child(n + 2) {
+  display: none;
+}
+.presenting .tickerBody > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.presenting .pin > div,
+.presenting .pinAlert > div {
+  display: flex;
+  gap: var(--s-3);
+  min-width: 0;
+  overflow: hidden;
+}
+.presenting .pinIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* End summary: two columns so it fits over the panes without scrolling. */
+.presenting .summaryOverlay {
+  place-items: center;
+  padding: var(--s-3);
+  overflow: hidden;
+}
+.presenting .summary {
+  width: min(72rem, 100%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  column-gap: var(--s-6);
+  row-gap: var(--s-2);
+  align-content: start;
+  padding: var(--s-4) var(--s-5);
+}
+.presenting .summary > * {
+  grid-column: 1;
+}
+.presenting .summary > .table {
+  grid-column: 2;
+  grid-row: 1 / span 8;
+  align-self: center;
+}
+.presenting .summaryLine {
+  font-size: var(--fs-lg);
 }

@@ -8,23 +8,39 @@ import { SiteHeader } from "../shared/SiteHeader";
 import s from "../../sim/render/sim.module.css";
 
 const SEED = 1;
+/** Presenting mode is for a projector; below this width the normal layout is already compact. */
+const PRESENT_MIN_WIDTH = "(min-width: 1024px)";
+const wideEnough = () => typeof window !== "undefined" && window.matchMedia?.(PRESENT_MIN_WIDTH).matches === true;
 
 /**
  * Runner states (see useSimRunner): paused at 0 -> playing -> paused ... -> finished (summary
  * over the panes, Play disabled) -> Replay (playing from 0) or Restart (paused at 0).
  * Timeline markers seek from any state and leave the play state as it was.
+ *
+ * Layout states, independent of the runner: normal <-> presenting.
+ *  - normal -> presenting: the Present button; or Play week pressed at the start of a week (minute 0)
+ *    or Replay, on viewports >= 1024 px. Resuming after a pause does not re-enter, so a presenter who
+ *    left presenting mode is not pulled back in.
+ *  - presenting -> normal: the Exit presentation button, or Escape (unless a dialog is open, where
+ *    Escape closes the dialog).
+ *  - Pause, Restart, seeking and the end of the week never change the layout.
  */
 export default function SimView() {
   const r = useSimRunner(SEED);
   const { sim } = r;
   const st = sim.state;
   const [assumptionsOpen, setAssumptionsOpen] = useState(false);
+  const [presenting, setPresenting] = useState(false);
 
-  // Space = play / pause, unless a control that uses space itself has focus.
+  // Space = play / pause, unless a control that uses space itself has focus. Escape leaves presenting.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "Space" && e.key !== " ") return;
       const el = e.target as HTMLElement | null;
+      if (e.key === "Escape") {
+        if (presenting && !document.querySelector("dialog[open]") && !el?.closest("dialog")) setPresenting(false);
+        return;
+      }
+      if (e.code !== "Space" && e.key !== " ") return;
       if (el && el.closest("button, input, select, textarea, a, dialog, summary")) return;
       e.preventDefault();
       r.toggle();
@@ -32,6 +48,20 @@ export default function SimView() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
+
+  // Presenting fills the viewport from the top; never start it half scrolled.
+  useEffect(() => {
+    if (presenting) window.scrollTo(0, 0);
+  }, [presenting]);
+
+  const onPlayButton = () => {
+    if (!r.playing && st.minute === 0 && wideEnough()) setPresenting(true);
+    r.toggle();
+  };
+  const onReplay = () => {
+    if (wideEnough()) setPresenting(true);
+    r.reset(0, true);
+  };
 
   const daysDone = st.worlds.today.daily.length;
   const lastDay = daysDone > 0 ? daysDone : 0;
@@ -48,6 +78,8 @@ export default function SimView() {
             iHh: Math.round(st.worlds.imaq.daily[lastDay - 1].householdHoursDry),
           });
 
+  const desc = (id: WorldId) => (presenting ? t(`sim.${id}.short`) : id === "imaq" ? t("sim.imaq.descOne") : t("sim.today.desc"));
+
   const pane = (id: WorldId) => {
     const w = st.worlds[id];
     const lit = w.houses.filter((h) => h.lightOn).length;
@@ -57,7 +89,7 @@ export default function SimView() {
         <section className={s.pane} aria-labelledby={`pane-${id}`}>
           <header className={s.paneHead}>
             <h2 id={`pane-${id}`} className={`eyebrow ${s.paneEyebrow}`}>{t(`sim.${id}.title`)}</h2>
-            <p className={s.paneDesc}>{t(`sim.${id}.desc`)}</p>
+            <p className={s.paneDesc}>{desc(id)}</p>
           </header>
           <figure className={s.mapWrap}>
             <VillageMap
@@ -82,9 +114,9 @@ export default function SimView() {
 
   return (
     <div className={s.page}>
-      <SiteHeader />
-      <main className={s.root}>
-        <div className={s.heading}>
+      {!presenting && <SiteHeader />}
+      <main className={presenting ? `${s.root} ${s.presenting}` : s.root}>
+        <div className={s.top}>
           <div className={s.headingText}>
             <AssumptionsButton onOpen={() => setAssumptionsOpen(true)} />
             <h1 className={s.title}>{t("sim.pageTitle")}</h1>
@@ -93,25 +125,33 @@ export default function SimView() {
           <Controls
             playing={r.playing}
             done={st.done}
-            onToggle={r.toggle}
+            onToggle={onPlayButton}
             onRestart={() => r.reset(0, false)}
             speed={r.speed}
             onSpeed={r.setSpeed}
+            presenting={presenting}
+            onPresent={setPresenting}
           />
+          <Clock state={st} />
+          <Timeline state={st} onSeek={r.seek} />
         </div>
-        <Clock state={st} />
-        <Timeline state={st} onSeek={r.seek} />
         <div className={s.panes}>
           {pane("today")}
           {pane("imaq")}
           {st.done && (
             <div className={s.summaryOverlay}>
-              <Summary today={st.worlds.today} imaq={st.worlds.imaq} onReplay={() => r.reset(0, true)} onAssumptions={() => setAssumptionsOpen(true)} />
+              <Summary
+                today={st.worlds.today}
+                imaq={st.worlds.imaq}
+                onReplay={onReplay}
+                onAssumptions={() => setAssumptionsOpen(true)}
+                scrollOnShow={!presenting}
+              />
             </div>
           )}
         </div>
         <Ticker state={st} />
-        <Legend />
+        {!presenting && <Legend />}
         <p className={s.srOnly} aria-live="polite">{srText}</p>
         <Assumptions open={assumptionsOpen} onClose={() => setAssumptionsOpen(false)} />
       </main>
