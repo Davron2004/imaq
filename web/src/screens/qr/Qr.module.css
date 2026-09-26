@@ -1,47 +1,51 @@
+/* Printable door QR sheet, following the design reference (qrPage()). */
 .page {
-  padding: var(--s-5);
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: var(--s-7) var(--s-6);
 }
+.heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-6);
+}
+.heading h1 { margin: var(--s-2) 0 var(--s-3); }
+.heading p { margin: 0; }
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--s-5);
 }
-.card {
-  border: 2px solid var(--c-text);
-  border-radius: var(--radius);
-  padding: var(--s-4);
+.sticker {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 1px solid var(--c-border);
   text-align: center;
   break-inside: avoid;
+  min-width: 0;
 }
-.card svg {
-  width: 100%;
-  height: auto;
-}
-.label {
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-  margin: var(--s-2) 0 0;
-}
-.instruction {
-  margin: var(--s-1) 0 0;
-}
-.printBtn {
-  margin-bottom: var(--s-4);
+.sticker h2 { margin: 0; }
+.code { width: 100%; max-width: 13.75rem; background: #fff; color: #000; padding: var(--s-2); }
+.code svg { display: block; width: 100%; height: auto; }
+.instruction { margin: 0; font-weight: var(--fw-semibold); }
+.url { overflow-wrap: anywhere; font-size: var(--fs-sm); }
+
+@media (max-width: 48rem) {
+  .page { padding: var(--s-5) var(--s-4); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media print {
-  .printBtn {
-    display: none;
-  }
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  .noPrint { display: none; }
+  .page { padding: 0; max-width: none; }
+  .grid { grid-template-columns: repeat(3, 1fr); gap: 0.25in; }
+  .sticker { border-color: #000; }
   @page {
     size: letter;
     margin: 0.5in;
-  }
-}
-@media (max-width: 700px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }

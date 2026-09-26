@@ -1,10 +1,11 @@
 /*
- * Design tokens. Owned by the UI design session (docs/ui-handoff.md, appendix).
- * v0 is deliberately plain: high contrast, large type, big targets.
+ * Design tokens, following the design reference (Open Design "Imaq UI reference"):
+ * a light utility look with ink text, one navy primary, hairline borders and flat status tints.
+ * Light is the default everywhere. Dark is opt-in (the driver's night mode sets data-theme="dark").
  * Components use only these variables, never raw colours or sizes.
  */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* colour */
   --c-bg: #ffffff;
@@ -12,7 +13,8 @@
   --c-surface-2: #e6eaee;
   --c-text: #0d1b24;
   --c-text-muted: #3d4d58;
-  --c-border: #5b6b76;
+  --c-border: #5b6b76; /* control borders: 3:1+ against the background */
+  --c-soft-line: #ccd3d9; /* panel outlines and dividers (decorative) */
   --c-primary: #0b3d5c;
   --c-primary-text: #ffffff;
   --c-focus: #985000;
@@ -28,15 +30,23 @@
 
   /* type (rem so the phone's text-size setting scales everything) */
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Canadian Aboriginal", sans-serif;
-  --fs-sm: 0.9375rem;
-  --fs-base: 1.125rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-mobile: 1.125rem;
   --fs-lg: 1.375rem;
   --fs-xl: 1.75rem;
   --fs-2xl: 2.5rem;
   --fs-3xl: 3.5rem;
+  --fs-hero: clamp(2.5rem, 4.5vw, 4.75rem);
   --fw-normal: 400;
+  --fw-semibold: 650;
   --fw-bold: 700;
-  --lh: 1.4;
+  --fw-heavy: 730;
+  --lh: 1.5;
+  --ls-display: -0.04em;
+  --ls-tight: -0.025em;
+  --ls-eyebrow: 0.12em;
 
   /* space */
   --s-1: 0.25rem;
@@ -46,55 +56,33 @@
   --s-5: 1.5rem;
   --s-6: 2rem;
   --s-7: 3rem;
+  --s-8: 4rem;
 
   /* shape */
-  --radius: 0.25rem;
-  --radius-lg: 0.5rem;
-  --border-w: 2px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --border-w: 1px;
   --focus-ring: 0 0 0 3px var(--c-bg), 0 0 0 6px var(--c-focus);
 
   /* targets */
   --tap-min: 48px;
+  --tap-mobile: 56px;
   --tap-driver: 64px;
   --tap-hero: 88px;
-
-  /* type rhythm (reference: tighter display headings) */
-  --ls-tight: -0.02em;
-  --ls-display: -0.04em;
 
   /* motion */
   --dur: 150ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --c-bg: #0b1217;
-    --c-surface: #152029;
-    --c-surface-2: #1f2d38;
-    --c-text: #f2f5f7;
-    --c-text-muted: #c2ccd3;
-    --c-border: #8d9ca6;
-    --c-primary: #7cc4f0;
-    --c-primary-text: #06141d;
-    --c-focus: #ffb454;
-    --c-danger: #ff8a8a;
-    --c-danger-text: #1a0203;
-    --c-warn: #ffcf7a;
-    --c-warn-bg: #3a2a08;
-    --c-ok: #8fdc9f;
-    --c-ok-bg: #0f2e17;
-    --c-info-bg: #13283a;
-    --c-emergency: #ff8a8a;
-    --c-emergency-bg: #3a0d0f;
-  }
-}
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --c-bg: #0b1217;
   --c-surface: #152029;
   --c-surface-2: #1f2d38;
   --c-text: #f2f5f7;
   --c-text-muted: #c2ccd3;
   --c-border: #8d9ca6;
+  --c-soft-line: #455966;
   --c-primary: #7cc4f0;
   --c-primary-text: #06141d;
   --c-focus: #ffb454;

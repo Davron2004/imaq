@@ -32,7 +32,7 @@
   stroke-dasharray: 2 2;
 }
 .label {
-  font-size: 8px;
+  font-size: 7px;
   font-weight: bold;
   fill: var(--c-text);
   text-anchor: middle;
@@ -47,22 +47,34 @@
   stroke: var(--c-text);
   stroke-width: 1;
 }
+/* Solid fills so the white letter inside each mark is readable; shape + letter carry the meaning, colour only adds to it. */
 .soon {
-  fill: var(--c-info-bg);
+  fill: var(--c-primary);
   stroke: var(--c-primary);
 }
 .out {
-  fill: var(--c-warn-bg);
-  stroke: var(--c-warn);
+  fill: var(--c-danger);
+  stroke: var(--c-danger);
 }
 .emergency {
-  fill: var(--c-emergency-bg);
-  stroke: var(--c-emergency);
+  fill: var(--c-emergency);
+  stroke: var(--c-text);
 }
 .sewage {
-  fill: var(--c-surface-2);
-  stroke: var(--c-border);
+  fill: var(--c-warn);
+  stroke: var(--c-warn);
 }
+.legend {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  font-size: var(--fs-sm);
+}
+.legend li { display: inline-flex; align-items: center; gap: var(--s-2); }
+.legend svg { width: 1.25rem; height: 1.25rem; flex: none; overflow: visible; }
 .listToggle {
   margin-top: var(--s-2);
   background: none;

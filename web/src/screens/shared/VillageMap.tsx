@@ -55,7 +55,7 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
   const spanX = Math.max(10, Math.max(...xs) - Math.min(...xs));
   const spanY = Math.max(10, Math.max(...ys) - Math.min(...ys));
   // Symbols are drawn in a small unit space and scaled up, so they stay readable whatever the map's size in metres.
-  const k = Math.max(spanX, spanY) / 260;
+  const k = Math.max(spanX, spanY) / 330;
   const pad = 22 * k;
   const minX = Math.min(...xs) - pad;
   const minY = Math.min(...ys) - pad;
@@ -96,7 +96,7 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
           const anyTooLong = reqs.some((r) => tooLongSet.has(r.id));
           return (
             <g key={house.id} transform={`translate(${house.x} ${house.y}) scale(${k})`}>
-              <circle className={s.house} r={4} />
+              <circle className={s.house} r={3.5} />
               {anyTooLong && <circle className={s.tooLong} r={8} />}
               {reqs.map((r, i) => (
                 <g key={r.id} transform={`translate(${(i - (reqs.length - 1) / 2) * 12} -14)`}>
@@ -133,5 +133,25 @@ export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: V
         </ul>
       )}
     </div>
+  );
+}
+
+/** Key for the map symbols: the same shape and letter as on the map, with the request type in words. */
+export function VillageMapLegend() {
+  const kinds: RequestKind[] = ["emergency", "out", "soon", "sewage"];
+  return (
+    <ul className={s.legend}>
+      {kinds.map((kind) => (
+        <li key={kind}>
+          <svg viewBox="-10 -10 20 20" aria-hidden="true">
+            <Shape kind={kind} size={kind === "emergency" ? 5 : 7} />
+            <text className={s.markLetter} y={kind === "emergency" ? 4 : 3} style={{ fontSize: 8 }}>
+              {KIND_LETTER[kind]}
+            </text>
+          </svg>
+          {t(`common.request.${kind}`)}
+        </li>
+      ))}
+    </ul>
   );
 }

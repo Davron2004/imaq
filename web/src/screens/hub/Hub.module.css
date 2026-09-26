@@ -1,70 +1,198 @@
+/* Hub, following the design reference (hub()): hero with village art and 3 steps,
+   stat strip, four numbered role cards, village + QR panels, door-light notice, footer. */
 .page {
-  max-width: 60rem;
+  max-width: 96rem;
   margin: 0 auto;
-  padding: var(--s-4);
+  padding: var(--s-7) var(--s-6);
 }
-.intro {
-  margin-bottom: var(--s-5);
-}
-.roles {
+
+/* hero */
+.hero {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--s-4);
-  margin-bottom: var(--s-5);
-}
-.roleCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-.villageCard {
-  margin-bottom: var(--s-5);
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: var(--s-8);
   align-items: center;
-  gap: var(--s-3);
-  justify-content: space-between;
+  padding: var(--s-7) 0 var(--s-8);
 }
-.qrGrid {
+.hero h1 {
+  font-size: var(--fs-hero);
+  line-height: 1.06;
+  letter-spacing: -0.055em;
+  margin: var(--s-5) 0;
+}
+.heroText { font-size: 1.125rem; color: var(--c-text-muted); max-width: 48ch; }
+.heroActions { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-6); }
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap-min);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+.linkButton:hover { background: var(--c-surface); }
+.linkButton svg { width: 1.25em; height: 1.25em; flex: none; }
+.primary { background: var(--c-primary); border-color: var(--c-primary); color: var(--c-primary-text); }
+.primary:hover { background: var(--c-primary); filter: brightness(1.12); }
+
+.heroArt {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-  gap: var(--s-4);
-  margin-bottom: var(--s-5);
+  gap: var(--s-5);
+  padding: var(--s-5);
+  background: var(--c-surface);
+  border: 1px solid var(--c-soft-line);
+  border-radius: var(--radius-lg);
+  min-width: 0;
 }
-.qrCard {
-  text-align: center;
+.heroArtHead { display: flex; justify-content: space-between; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.mapPlaceholder {
+  display: grid;
+  place-items: center;
+  min-height: 16rem;
+  color: var(--c-text-muted);
+  border: 1px dashed var(--c-border);
+  border-radius: var(--radius);
 }
-.qrCard svg {
-  width: 100%;
-  max-width: 8rem;
-  height: auto;
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
 }
-.footer {
-  border-top: 1px solid var(--c-surface-2);
-  padding-top: var(--s-4);
+.steps li { display: grid; gap: var(--s-2); justify-items: start; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.stepNumber {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--c-border);
+  border-radius: 50%;
+  color: var(--c-primary);
+}
+
+/* stat strip */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-5);
+  padding: var(--s-5) 0;
+  border-block: 1px solid var(--c-soft-line);
+  margin-bottom: var(--s-7);
+}
+.stat { display: grid; gap: var(--s-2); }
+.stat strong { font-size: 2rem; letter-spacing: -0.04em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--c-text-muted); font-size: 0.9375rem; }
+
+/* roles */
+.sectionHead { margin-bottom: var(--s-5); }
+.sectionHead h2 { margin: 0 0 var(--s-1); }
+.sectionHead p { margin: 0; }
+.roles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s-4);
+}
+.roles li { display: grid; }
+.roleCard {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  background: var(--c-surface);
+  border-top: 3px solid var(--c-primary);
+  color: var(--c-text);
+  text-decoration: none;
+}
+.roleCard:hover { background: var(--c-info-bg); }
+.roleCard h3, .roleCard p { margin: 0; }
+.roleCard p { color: var(--c-text-muted); }
+.roleTop { display: flex; justify-content: space-between; align-items: flex-start; color: var(--c-primary); }
+.roleTop :global(.eyebrow) { color: var(--c-text); }
+.roleIcon svg { width: 1.5rem; height: 1.5rem; }
+.arrow { display: flex; align-items: center; gap: var(--s-2); font-weight: var(--fw-semibold); color: var(--c-primary); margin-top: var(--s-4); }
+.arrow svg { width: 1.25rem; height: 1.25rem; }
+
+/* bottom panels */
+.bottom { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6); margin-top: var(--s-7); }
+.panel {
+  display: grid;
+  gap: var(--s-4);
+  align-content: start;
+  padding: var(--s-5);
+  border: 1px solid var(--c-soft-line);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+.panel h2 { margin-bottom: var(--s-2); }
+.panel p { margin: 0; }
+.villageRow { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.links { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+.links a { display: inline-flex; align-items: center; min-height: var(--tap-min); }
+.qrMini { display: flex; gap: var(--s-5); align-items: center; flex-wrap: wrap; }
+.qrCode { background: #fff; color: #000; width: 11rem; flex: none; padding: var(--s-2); }
+.qrCode svg { display: block; width: 100%; height: auto; }
+.qrText { flex: 1 1 14rem; display: grid; gap: var(--s-3); justify-items: start; }
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap-min);
+  color: var(--c-text);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+.textLink:hover { text-decoration: underline; }
+.textLink svg { width: 1.25rem; height: 1.25rem; }
+
+/* door-light notice */
+.notice {
+  margin-top: var(--s-6);
+  padding: var(--s-4);
+  background: var(--c-info-bg);
+  color: var(--c-primary);
+  border: 1px solid var(--c-primary);
+  border-radius: var(--radius);
+}
+.notice p { margin: 0; }
+
+/* footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+  margin-top: var(--s-7);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--c-soft-line);
   font-size: var(--fs-sm);
   color: var(--c-text-muted);
 }
+.footerCol { display: grid; gap: var(--s-1); align-content: start; }
+.footerCol a { color: var(--c-text-muted); }
 
-/* From the UI reference: a single row of four role cards on desktop, each with
-   a primary top rule, and the action pinned to the bottom so buttons line up. */
-.page {
-  max-width: 72rem;
+@media (max-width: 64rem) {
+  .hero { gap: var(--s-6); }
+  .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-.page h1 {
-  font-size: var(--fs-2xl);
-}
-.roleCard {
-  border-top: 3px solid var(--c-primary);
-}
-.roleCard > :last-child {
-  margin-top: auto;
-}
-@media (min-width: 64rem) {
-  .roles {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+@media (max-width: 48rem) {
+  .page { padding: var(--s-5) var(--s-4); }
+  .hero { grid-template-columns: minmax(0, 1fr); padding-block: var(--s-5); }
+  .hero h1 { font-size: clamp(2.5rem, 8vw, 3.5rem); }
+  .heroArt { padding: var(--s-4); }
+  .stats { gap: var(--s-4); }
+  .stat strong { font-size: 1.75rem; }
+  .roles { grid-template-columns: minmax(0, 1fr); }
+  .roleCard { padding: var(--s-4); }
+  .bottom { grid-template-columns: minmax(0, 1fr); }
 }

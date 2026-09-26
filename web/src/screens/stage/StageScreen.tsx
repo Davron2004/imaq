@@ -1,10 +1,30 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
+import { ArrowUpRight } from "lucide-react";
 import { api } from "../../data/api";
 import { t } from "../../i18n";
+import { SiteHeader } from "../shared/SiteHeader";
 import s from "./Stage.module.css";
 
 const OFFLINE_KEY = "imaq.forceOffline";
+
+function Panel({ title, to, src, children, wide }: { title: string; to: string | null; src: string | null; children?: React.ReactNode; wide?: boolean }) {
+  return (
+    <section className={`${s.panel} ${wide ? s.wide : ""}`} aria-label={title}>
+      <header className={s.panelHead}>
+        <h2>{title}</h2>
+        {to && (
+          <Link to={to} className={s.openFull}>
+            {t("stage.openFull")}
+            <ArrowUpRight aria-hidden="true" />
+          </Link>
+        )}
+      </header>
+      {src ? <iframe title={title} src={src} allow="microphone" /> : <div className={s.placeholder}>{t("stage.loading")}</div>}
+      {children}
+    </section>
+  );
+}
 
 export default function StageScreen() {
   const { villageId = "demo" } = useParams();
@@ -37,27 +57,27 @@ export default function StageScreen() {
     }
   };
 
+  const residentPath = token ? `/h/${token}` : null;
   return (
-    <main className={s.page}>
-      <div className={s.phones}>
-        <div className={s.phoneFrame}>
-          <div className={s.phoneLabel}>{t("stage.resident")}</div>
-          {token && <iframe title={t("stage.resident")} src={`/h/${token}`} />}
+    <>
+      <SiteHeader />
+      <main className={s.page}>
+        <div className={s.heading}>
+          <span className="eyebrow">{t("stage.eyebrow")}</span>
+          <h1>{t("stage.headline")}</h1>
+          <p className="muted">{t("stage.subtitle")}</p>
         </div>
-        <div className={s.phoneFrame}>
-          <div className={s.phoneLabel}>{t("stage.driver")}</div>
-          <iframe title={t("stage.driver")} src={`/v/${villageId}/driver`} />
-          <div className={s.switchRow}>
-            <label>
-              <input type="checkbox" checked={offline} onChange={toggleOffline} /> {t("stage.offlineSwitch")}
+        <div className={s.grid}>
+          <Panel title={t("stage.resident")} to={residentPath} src={residentPath} />
+          <Panel title={t("stage.driver")} to={`/v/${villageId}/driver`} src={`/v/${villageId}/driver`}>
+            <label className={s.switchRow}>
+              <input type="checkbox" checked={offline} onChange={toggleOffline} />
+              <span>{t("stage.offlineSwitch")}</span>
             </label>
-          </div>
+          </Panel>
+          <Panel title={t("stage.office")} to={`/v/${villageId}/office`} src={`/v/${villageId}/office?embed=1`} wide />
         </div>
-      </div>
-      <div className={s.officeFrame}>
-        <div className={s.phoneLabel}>{t("stage.office")}</div>
-        <iframe title={t("stage.office")} src={`/v/${villageId}/office`} />
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
