@@ -1,5 +1,10 @@
 # Submission form drafts
 
+**Team:** Larp and Larper
+**Members:** Azim Djabborov, Davron Djabborov
+**Prototype:** https://imaq.davron-jabborov.workers.dev
+**Repo:** https://github.com/Davron2004/imaq (MIT)
+
 Limits: description 250 characters, the other three 700 each. Current lengths: 238, 599, 588, 639.
 
 ## Description (250)
