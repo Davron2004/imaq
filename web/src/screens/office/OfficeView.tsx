@@ -37,18 +37,18 @@ export interface OfficeViewProps {
 export default function OfficeView(props: OfficeViewProps) {
   const { status, snapshot, newFlagIds, announcement, villageId, onAddRequest, onCancelRequest, onConfirmLog, onReset, resetting, onRetry, lookup, weekly } = props;
 
-  if (status === "loading" || !snapshot) {
-    return (
-      <main className={s.page} aria-busy="true">
-        <p>{t("office.loading")}</p>
-      </main>
-    );
-  }
-  if (status === "error") {
+  if (status === "error" && !snapshot) {
     return (
       <main className={s.page}>
         <p>{t("office.error")}</p>
         <Button onClick={onRetry}>{t("office.retry")}</Button>
+      </main>
+    );
+  }
+  if (status === "loading" || !snapshot) {
+    return (
+      <main className={s.page} aria-busy="true">
+        <p>{t("office.loading")}</p>
       </main>
     );
   }
@@ -158,7 +158,12 @@ export default function OfficeView(props: OfficeViewProps) {
 
         <Card className={s.wide}>
           <h2>{t("office.mapHeading")}</h2>
-          <VillageMap houses={snapshot.houses} openRequests={snapshot.openRequests} waitingTooLong={snapshot.counts.waitingTooLong} />
+          <VillageMap
+            houses={snapshot.houses}
+            openRequests={snapshot.openRequests}
+            waitingTooLong={snapshot.counts.waitingTooLong}
+            geometry={snapshot.village.geometry}
+          />
         </Card>
 
         <Card>

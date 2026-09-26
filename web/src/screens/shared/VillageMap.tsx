@@ -6,7 +6,7 @@
  */
 import { useId, useState } from "react";
 import { t } from "../../i18n";
-import type { House, OpenRequest, RequestKind } from "../../../../shared/types";
+import type { House, OpenRequest, RequestKind, VillageGeometry } from "../../../../shared/types";
 import s from "./VillageMap.module.css";
 
 const KIND_LETTER: Record<RequestKind, string> = { soon: "S", out: "O", emergency: "E", sewage: "W" };
@@ -32,9 +32,11 @@ export interface VillageMapProps {
   houses: House[];
   openRequests: OpenRequest[];
   waitingTooLong: string[];
+  /** Optional roads / plant / garage, in the same metre space as House.x/y, if the server provides it. */
+  geometry?: VillageGeometry;
 }
 
-export function VillageMap({ houses, openRequests, waitingTooLong }: VillageMapProps) {
+export function VillageMap({ houses, openRequests, waitingTooLong, geometry }: VillageMapProps) {
   const titleId = useId();
   const [showList, setShowList] = useState(false);
   const byHouse = new Map<string, OpenRequest[]>();
@@ -45,8 +47,8 @@ export function VillageMap({ houses, openRequests, waitingTooLong }: VillageMapP
   }
   const tooLongSet = new Set(waitingTooLong);
 
-  const xs = houses.map((h) => h.x);
-  const ys = houses.map((h) => h.y);
+  const xs = houses.map((h) => h.x).concat(geometry ? [0, geometry.width] : []);
+  const ys = houses.map((h) => h.y).concat(geometry ? [0, geometry.height] : []);
   const pad = 20;
   const minX = Math.min(0, ...xs) - pad;
   const maxX = Math.max(10, ...xs) + pad;
@@ -65,6 +67,25 @@ export function VillageMap({ houses, openRequests, waitingTooLong }: VillageMapP
         preserveAspectRatio="xMidYMid meet"
       >
         <title id={titleId}>Village map: houses with open water and sewage requests</title>
+        {geometry?.roads.map((road) => (
+          <polyline key={road.id} className={s.road} points={road.points.map((p) => p.join(",")).join(" ")} />
+        ))}
+        {geometry && (
+          <>
+            <g transform={`translate(${geometry.plant.x} ${geometry.plant.y})`}>
+              <rect className={s.plant} x={-6} y={-6} width={12} height={12} />
+              <text className={s.label} y={14}>
+                Plant
+              </text>
+            </g>
+            <g transform={`translate(${geometry.garage.x} ${geometry.garage.y})`}>
+              <rect className={s.garage} x={-6} y={-6} width={12} height={12} />
+              <text className={s.label} y={14}>
+                Garage
+              </text>
+            </g>
+          </>
+        )}
         {houses.map((house) => {
           const reqs = byHouse.get(house.id) ?? [];
           const anyTooLong = reqs.some((r) => tooLongSet.has(r.id));
