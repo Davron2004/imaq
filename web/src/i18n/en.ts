@@ -307,8 +307,8 @@ export const en = {
 
   // hub
   "hub.title": "Imaq",
-  "hub.intro1": "Most homes here get water from a truck, not a pipe — and until now, nobody kept a record of who needed it.",
-  "hub.intro2": "Imaq turns the door light into an app: residents ask in one tap, drivers see who needs water before they load, and the water office finally has a record.",
+  "hub.intro1": "In most Nunavik villages, water comes by truck. To ask for it, a household turns on a light by the door, and a driver drives the whole village to spot the lights before going back to fill up.",
+  "hub.intro2": "With Imaq, residents ask from their phone, drivers know who needs water before they load, and the water office gets its first record of deliveries. The door light still works.",
   "hub.village.creating": "Setting up your demo village…",
   "hub.village.ready": "Your demo village: {name}",
   "hub.village.failed": "Couldn't create a private village. Using the shared demo village instead.",
