@@ -4,6 +4,8 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // Agent worktrees live under .claude/; their builds must not reload this dev server.
+  server: { watch: { ignored: ["**/.claude/**", "**/dist/**"] } },
   plugins: [
     react(),
     cloudflare(),
