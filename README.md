@@ -33,17 +33,18 @@ Everything runs on free tiers. $0.
 npm install
 npx wrangler d1 migrations apply imaq --local
 npm run dev          # http://localhost:5173
-npm test             # unit tests (rules, sync idempotency, simulation determinism)
-npm run e2e          # Playwright, against the dev server
+npm test             # unit tests: rules, sync idempotency, the driver's offline engine, API routes, simulation
+npm run e2e          # Playwright, against the dev server (the service-worker tests skip there)
 ```
 
-The Workers AI binding needs a Cloudflare login (`npx wrangler login`); without it, voice notes fall back to "needs a human" (or the stored results for the demo samples).
+`npm run dev` needs a Cloudflare login (`npx wrangler login`; a free account is enough) because the Workers AI binding is remote even in development. Without a login the dev server doesn't start. If a voice note can't be processed (the AI call fails or times out), it is marked "needs a human"; the three demo samples fall back to stored results instead.
 
 ## Docs
 
 - `imaq-build-brief.md`: the problem, the principles, and what the product must do
 - `docs/build-plan.md`: architecture and build plan
 - `docs/ui-handoff.md`: what the interface must do and its hard constraints
+- `docs/submission.md`: the hackathon submission form text
 
 ## Licence
 
