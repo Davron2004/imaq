@@ -89,7 +89,8 @@ test("every driver action works offline and syncs exactly once", async ({ page, 
   await page.getByRole("button", { name: "Mark Truck 1 down" }).click();
   await expect(page.getByText("Truck 1 is down since")).toBeVisible();
 
-  // A sample voice note (no microphone needed).
+  // A sample voice note (no microphone needed). The tools live on Today's list, so go back there first.
+  await page.getByRole("link", { name: /Today.s list/ }).first().click();
   await page.getByRole("link", { name: "Voice note", exact: true }).click();
   await page.getByRole("button", { name: "Sample: heater on Truck 2" }).click();
   await expect(page.getByTestId("note-state").first()).toHaveText("Saved on phone");
