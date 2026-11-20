@@ -2,7 +2,7 @@
 
 Water delivery for truck-served communities in Nunavik. Built at Hack for Humanity Ottawa 2026 for the "Water in Canada's North" challenge.
 
-**Live demo:** https://imaq.davron-jabborov.workers.dev (no account needed; each visitor gets a private copy of a fictional demo village)
+Live demo: https://imaq.davron-jabborov.workers.dev (no account needed; each browser gets its own copy of a fictional demo village, deleted after three days)
 
 In most Nunavik villages, water comes by truck to a tank in each house. To ask for water, a household turns on a light by the door. A driver drives the whole village to see which lights are on, goes back, fills up at the plant, then drives the village again to deliver. Imaq removes that scouting lap:
 
@@ -25,7 +25,7 @@ The door light keeps working. If Imaq is down, the village works exactly as it d
 | Rules | `shared/rules.ts`: plain functions (queue order, loads, waiting too long, recurring truck problem, snow clearing, house repairs) |
 | Simulation | `web/src/sim/engine`: seeded, deterministic, runs entirely in the browser |
 
-Everything runs on free tiers. $0.
+Everything runs on Cloudflare's free tier.
 
 ## Run it locally
 
